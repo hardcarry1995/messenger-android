@@ -1,6 +1,6 @@
 
 apply plugin: 'com.android.application'
-apply from: "https://mesibo.com/api/mesibo.gradle"
+apply from: "https://api.mesibo.com/mesibo.gradle"
 
 ext {
     PUBLISH_VERSION = "1.0.0"
