@@ -11,7 +11,7 @@ Mesibo Messenger is an open-source app with real-time messaging, voice and video
 - Online status (presence) and real-time profile update
 - Push notifications
 
-Latest versions are also available through Google Play Store and Apple App Srore:
+Latest versions are also available through Google Play Store and Apple App Store:
 
 <a href="https://play.google.com/store/apps/details?id=com.mesibo.mesiboapplication"><img
   alt="Get it on Google Play" height="80"
@@ -65,7 +65,7 @@ These apps use following [Mesibo SDKs](https://mesibo.com).
 These apps also use following third party libraries/services.
 
 - [Facebook AccountKit](https://www.accountkit.com/) for the Phone Verification
-- [Goolge Maps](https://developers.google.com/maps/documentation/) and [Goolge Places](https://cloud.google.com/maps-platform/places/) SDKs for Geolocation integration 
+- [Google Maps](https://developers.google.com/maps/documentation/) and [Google Places](https://cloud.google.com/maps-platform/places/) SDKs for Geolocation integration 
 
 ## Documentation & Tutorials
 
