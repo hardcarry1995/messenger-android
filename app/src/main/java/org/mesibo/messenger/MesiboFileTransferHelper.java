@@ -163,7 +163,7 @@ public class MesiboFileTransferHelper implements Mesibo.FileTransferHandler {
 
         String url = file.getUrl();
         if(!url.toLowerCase().startsWith("http://") && !url.toLowerCase().startsWith("https://")) {
-            url = SampleAPI.getFileUrl() + url;
+            url = SampleAPI.getDownloadUrl() + url;
         }
 
         Mesibo.Http http = new Mesibo.Http();

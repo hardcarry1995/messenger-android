@@ -57,12 +57,14 @@ public class MainApplication extends Application implements Mesibo.RestartListen
     public static final String TAG = "MesiboSampleApplication";
     private static Context mContext = null;
     private static MesiboCall mCall = null;
+    private static AppConfig mConfig = null;
 
     @Override
     public void onCreate() {
         super.onCreate();
         mContext = getApplicationContext();
         Mesibo.setRestartListener(this);
+        mConfig = new AppConfig(this);
         SampleAPI.init(getApplicationContext());
 
         mCall = MesiboCall.getInstance();

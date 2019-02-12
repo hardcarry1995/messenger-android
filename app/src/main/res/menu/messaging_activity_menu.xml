@@ -41,5 +41,11 @@
         android:orderInCategory="0"
         android:title="Add" />
 
+    <item
+        android:id="@+id/mesibo_share"
+        app:showAsAction="ifRoom"
+        android:icon="@drawable/ic_action_share"
+        android:title="Invite Family and Friends" />
+
 
 </menu>

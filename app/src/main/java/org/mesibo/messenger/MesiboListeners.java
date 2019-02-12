@@ -268,6 +268,12 @@ public class MesiboListeners implements Mesibo.ConnectionListener, ILoginInterfa
                 UIManager.launchUserSettings(context);
             } else if(item == R.id.action_calllogs) {
                 MesiboCall.getInstance().launchCallLogs(context, 0);
+            } else if(item == R.id.mesibo_share) {
+                Intent sharingIntent = new Intent(android.content.Intent.ACTION_SEND);
+                sharingIntent.setType("text/plain");
+                sharingIntent.putExtra(android.content.Intent.EXTRA_SUBJECT, AppConfig.getConfig().invite.subject);
+                sharingIntent.putExtra(android.content.Intent.EXTRA_TEXT, AppConfig.getConfig().invite.text);
+                context.startActivity(Intent.createChooser(sharingIntent, AppConfig.getConfig().invite.title));
             }
         } 
 	else { // from messaging box

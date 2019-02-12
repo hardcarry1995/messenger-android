@@ -22,7 +22,7 @@
         android:name=".MainApplication"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
-        android:label="Mesibo"
+        android:label="Mesibo Messenger"
         android:supportsRtl="true"
         android:testOnly="false"
         android:theme="@style/AppTheme">

@@ -42,30 +42,32 @@ package org.mesibo.messenger;
 
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
+
 import android.text.TextUtils;
 import android.util.Base64;
-import android.util.Log;
 
 import com.google.gson.Gson;
 import com.mesibo.api.Mesibo;
 import com.mesibo.contactutils.ContactUtils;
+import com.mesibo.mediapicker.MediaPicker;
 import org.mesibo.messenger.gcm.MesiboRegistrationIntentService;
 import com.mesibo.calls.MesiboCall;
 
+
 import java.util.ArrayList;
+
+/**
+ * Created for Mesibo Sample App
+ */
 
 public class SampleAPI  {
     private static final String TAG="SampleAPI";
-    public static final String mSharedPrefKey = "org.mesibo.messenger";
-    private static SharedPreferences mSharedPref = null;
     private static NotifyUser mNotifyUser = null;
-    private static boolean mHasUtf8Db = false; // enable this is your db is utf-8 compliant
     private static boolean mSyncPending = true;
     private static boolean mContactSyncOver = false;
     private static Context mContext = null;
@@ -93,6 +95,7 @@ public class SampleAPI  {
         private boolean mOnUiThread = false;
         public static boolean result = true;
         public Context mContext = null;
+
         @Override
         public boolean Mesibo_onHttpProgress(Mesibo.Http http, int state, int percent) {
             if(percent < 0) {
@@ -183,6 +186,17 @@ public class SampleAPI  {
         public abstract void HandleAPIResponse(Response response);
     }
 
+    public static class Urls {
+        public String upload = "";
+        public String download = "";
+    }
+
+    public static class Invite {
+        public String text = "";
+        public String subject = "";
+        public String title = "";
+    }
+
     public static class Contacts {
         public String name = "";
         public String phone = "";
@@ -199,14 +213,17 @@ public class SampleAPI  {
         public String op;
         public String error;
         public String token;
-        public String uploadurl;
-        public String downloadurl;
         public Contacts[] contacts;
         public String name;
         public String status;
         public String members;
         public String photo;
         public String phone;
+        public String cc;
+
+        public Urls urls;
+        public Invite share;
+
         public long gid;
         public int type;
         public int profile;
@@ -218,21 +235,16 @@ public class SampleAPI  {
             op = null;
             error = null;
             token = null;
-            downloadurl = DEFAULT_FILE_URL;
-            uploadurl = mApiUrl;
             contacts = null;
             gid = 0;
             type = 0;
             profile = 0;
+            urls = null;
         }
     }
 
     private static Gson mGson = new Gson();
     private static String mApiUrl = "https://app.mesibo.com/api.php";
-    private static String mDownloadUrl = "";
-    private static String mUploadUrl = "";
-    private static String mToken = null;
-    private static String mPhone = null;
     private static long mContactTs = 0;
 
     private static boolean invokeApi(final Context context, final Bundle postBunlde, String filePath, String formFieldName, boolean uiThread) {
@@ -333,7 +345,7 @@ public class SampleAPI  {
         }
 
         if(selfProfile) {
-            mPhone = u.address;
+            AppConfig.getConfig().phone = u.address;
             Mesibo.setSelfProfile(u);
         }
         else
@@ -360,20 +372,28 @@ public class SampleAPI  {
                 return false;
             }
 
+            boolean save = false;
+            if(null != response.urls) {
+                AppConfig.getConfig().uploadurl = response.urls.upload;
+                AppConfig.getConfig().downloadurl = response.urls.download;
+                save = true;
+            }
+
+            if(null != response.share) {
+                AppConfig.getConfig().invite = response.share;
+                save = true;
+            }
+
             if(response.op.equals("login") && !TextUtils.isEmpty(response.token)) {
-                mToken = response.token; //TBD, save into preference
-                mPhone = response.phone;
-                if(TextUtils.isEmpty(mDownloadUrl))
-                    mDownloadUrl = response.downloadurl;
-                if(TextUtils.isEmpty(mUploadUrl))
-                    mUploadUrl = response.uploadurl;
+                AppConfig.getConfig().token = response.token; //TBD, save into preference
+                AppConfig.getConfig().phone = response.phone;
+                AppConfig.getConfig().cc = response.cc;
                 mContactTs = 0;
                 mResetSyncedContacts = true;
                 mSyncPending = true;
 
-                setStringValue("token", mToken);
-                setStringValue("downloadurl", mDownloadUrl);
-                setStringValue("uploadurl", mUploadUrl);
+                save = true;
+
                 Mesibo.reset();
                 startMesibo(true);
 
@@ -452,10 +472,11 @@ public class SampleAPI  {
             }
             else if(response.op.equals("logout")) {
                 forceLogout();
+                AppConfig.reset();
             }
 
-
-
+            if(save)
+                AppConfig.save();
         return true;
     }
 
@@ -540,9 +561,6 @@ public class SampleAPI  {
     }
 
     public static void init(Context context) {
-        if(null != mSharedPref)
-            return;
-
         mContext = context;
 
         Mesibo api = Mesibo.getInstance();
@@ -552,29 +570,25 @@ public class SampleAPI  {
         Mesibo.uploadCrashLogs();
         Mesibo.setSecureConnection(true);
 
+
         ApplicationInfo ai = null;
         try {
             ai = context.getPackageManager().getApplicationInfo(context.getPackageName(), PackageManager.GET_META_DATA);
+            mAkClientToken = ai.metaData.getString("com.facebook.accountkit.ClientToken");
+            mAkAppId = ai.metaData.getString("com.facebook.sdk.ApplicationId");
         } catch (Exception e) {}
 
-        mAkClientToken = ai.metaData.getString("com.facebook.accountkit.ClientToken");
-        mAkAppId = ai.metaData.getString("com.facebook.sdk.ApplicationId");
-
-
-        mSharedPref = context.getSharedPreferences(mSharedPrefKey, Context.MODE_PRIVATE);
-        mToken = getStringValue("token", null);
-        mDownloadUrl = getStringValue("downloadurl", DEFAULT_FILE_URL);
-        mUploadUrl = getStringValue("uploadurl", DEFAULT_FILE_URL);
-
-        if(!TextUtils.isEmpty(mToken)) {
+        if(!TextUtils.isEmpty(AppConfig.getConfig().token)) {
             startMesibo(false);
             startSync();
         }
     }
 
     public static String getPhone() {
-        if(null != mPhone)
-            return mPhone;
+        if(!TextUtils.isEmpty(AppConfig.getConfig().phone)) {
+            return AppConfig.getConfig().phone;
+        }
+
 
         Mesibo.UserProfile u = Mesibo.getSelfProfile();
 
@@ -583,17 +597,17 @@ public class SampleAPI  {
             forceLogout();
             return null;
         }
-        mPhone = u.address;
-        return mPhone;
+        AppConfig.getConfig().phone = u.address;
+        AppConfig.save();
+        return AppConfig.getConfig().phone;
     }
 
 
     public static String getToken() {
-        return mToken;
+        return AppConfig.getConfig().token;
     }
-    public static String getApiUrl() { return mApiUrl; }
-    public static String getFileUrl() { return mDownloadUrl; }
-    public static String getUploadUrl() { return mUploadUrl; }
+    public static String getUploadUrl() { return AppConfig.getConfig().uploadurl; }
+    public static String getDownloadUrl() { return AppConfig.getConfig().downloadurl; }
 
     public static void startOnlineAction() {
         sendGCMToken();
@@ -641,6 +655,9 @@ public class SampleAPI  {
         // set path for storing DB and messaging files
         Mesibo.setPath(Environment.getExternalStorageDirectory().getAbsolutePath());
 
+        String path = Mesibo.getBasePath();
+        MediaPicker.setPath(path);
+
         // add lister
         Mesibo.addListener(MesiboListeners.getInstance());
         MesiboCall.getInstance().setListener(MesiboListeners.getInstance());
@@ -653,7 +670,7 @@ public class SampleAPI  {
         mNotifyUser = new NotifyUser(MainApplication.getAppContext());
 
         // set access token
-        if(0 != Mesibo.setAccessToken(mToken)) {
+        if(0 != Mesibo.setAccessToken(AppConfig.getConfig().token)) {
             return false;
         }
 
@@ -680,6 +697,8 @@ public class SampleAPI  {
             mContactTs = Long.parseLong(ts);
 
         ContactUtils.init(mContext);
+        ContactUtils.setCountryCode(AppConfig.getConfig().cc);
+
         if(resetContacts)
             ContactUtils.syncReset();
 
@@ -690,14 +709,19 @@ public class SampleAPI  {
         return true;
     }
 
-    public static boolean startLogout() {
-        if(TextUtils.isEmpty(mToken))
-            return false;
+    private static Bundle createPostBundle(String op) {
+        if(TextUtils.isEmpty(AppConfig.getConfig().token))
+            return null;
 
         Bundle b = new Bundle();
-        b.putString("op", "logout");
-        b.putString("token", mToken);
+        b.putString("op", op);
+        b.putString("token", AppConfig.getConfig().token);
+        return b;
+    }
 
+    public static boolean startLogout() {
+        Bundle b = createPostBundle("logout");
+        if(null == b) return false;
         invokeApi(null, b, null, null, false);
         return true;
     }
@@ -708,10 +732,7 @@ public class SampleAPI  {
         SampleAPI.saveLocalSyncedContacts("", 0);
         SampleAPI.saveSyncedTimestamp(0);
         Mesibo.stop(true);
-        mToken = null;
-        mPhone = null;
-        setStringValue("token", "");
-        setStringValue("ts", "0");
+        AppConfig.getConfig().reset();
         mNotifyUser.clearNotification();
         Mesibo.reset();
         //Mesibo.resetDB();
@@ -748,12 +769,9 @@ public class SampleAPI  {
     }
 
     public static boolean setProfile(String name, String status, long groupid, ResponseHandler handler) {
-        if(TextUtils.isEmpty(mToken))
-            return false;
+        Bundle b = createPostBundle("profile");
+        if(null == b) return false;
 
-        Bundle b = new Bundle();
-        b.putString("op", "profile");
-        b.putString("token", mToken);
         b.putString("name", name);
         b.putString("status", status);
         b.putLong("gid", groupid);
@@ -765,12 +783,8 @@ public class SampleAPI  {
     }
 
     public static boolean setProfilePicture(String filePath, long groupid, ResponseHandler handler) {
-        if(TextUtils.isEmpty(mToken))
-            return false;
-
-        Bundle b = new Bundle();
-        b.putString("op", "upload");
-        b.putString("token", mToken);
+        Bundle b = createPostBundle("upload");
+        if(null == b) return false;
         b.putLong("mid", 0);
         b.putInt("profile", 1);
         b.putLong("gid", groupid);
@@ -788,18 +802,11 @@ public class SampleAPI  {
     }
 
     public static boolean getContacts(ArrayList<String> contacts, boolean hidden, boolean async) {
-        if(TextUtils.isEmpty(mToken))
-            return false;
-
-        //if((System.currentTimeMillis() - mContactFetchTs) < 5000)
-        //  return true;
-
-        Bundle b = new Bundle();
-        b.putString("op", "getcontacts");
-        b.putString("token", mToken);
-
         if(hidden && (null == contacts || contacts.size() == 0))
             return false;
+
+        Bundle b = createPostBundle("getcontacts");
+        if(null == b) return false;
 
         b.putString("hidden", hidden?"1":"0");
 
@@ -831,15 +838,14 @@ public class SampleAPI  {
     }
 
     public static boolean deleteContacts(ArrayList<String> contacts) {
-        if(TextUtils.isEmpty(mToken) || null == contacts || 0 == contacts.size())
+        if(null == contacts || 0 == contacts.size())
             return false;
+
+        Bundle b = createPostBundle("delcontacts");
+        if(null == b) return false;
 
         //if((System.currentTimeMillis() - mContactFetchTs) < 5000)
         //  return true;
-
-        Bundle b = new Bundle();
-        b.putString("op", "delcontacts");
-        b.putString("token", mToken);
 
         String[] c = contacts.toArray(new String[contacts.size()]);
         b.putString("phones", array2String(c));
@@ -857,12 +863,9 @@ public class SampleAPI  {
 
     // groupid is 0 for new group else pass actual value to add/remove members
     public static boolean setGroup(long groupid, String name, String status, String photoPath, String[] members, ResponseHandler handler) {
-        if(TextUtils.isEmpty(mToken))
-            return false;
+        Bundle b = createPostBundle("setgroup");
+        if(null == b) return false;
 
-        Bundle b = new Bundle();
-        b.putString("op", "setgroup");
-        b.putString("token", mToken);
         b.putString("name", name);
         b.putLong("gid", groupid);
         b.putString("status", status);
@@ -875,14 +878,10 @@ public class SampleAPI  {
     }
 
     public static boolean deleteGroup(long groupid, ResponseHandler handler) {
-        if(TextUtils.isEmpty(mToken) || 0 == groupid)
-            return false;
+        Bundle b = createPostBundle("delgroup");
+        if(null == b) return false;
 
-        Bundle b = new Bundle();
-        b.putString("op", "delgroup");
-        b.putString("token", mToken);
         b.putLong("gid", groupid);
-
         handler.setOnUiThread(true);
         handler.sendRequest(b, null, null);
 
@@ -890,26 +889,25 @@ public class SampleAPI  {
     }
 
     public static boolean getGroup(long groupid, ResponseHandler handler) {
-        if(TextUtils.isEmpty(mToken) || 0 == groupid)
+        if(0 == groupid)
             return false;
 
-        Bundle b = new Bundle();
-        b.putString("op", "getgroup");
-        b.putString("token", mToken);
-        b.putLong("gid", groupid);
+        Bundle b = createPostBundle("getgroup");
+        if(null == b) return false;
 
+        b.putLong("gid", groupid);
         handler.setOnUiThread(true);
         handler.sendRequest(b, null, null);
         return true;
     }
 
     public static boolean editMembers(long groupid, String[] members, boolean remove, ResponseHandler handler) {
-        if(TextUtils.isEmpty(mToken) || 0 == groupid || null == members)
+        if(0 == groupid || null == members)
             return false;
 
-        Bundle b = new Bundle();
-        b.putString("op", "editmembers");
-        b.putString("token", mToken);
+        Bundle b = createPostBundle("editmembers");
+        if(null == b) return false;
+
         b.putLong("gid", groupid);
         b.putString("m", array2String(members));
         b.putInt("delete", remove?1:0);
@@ -920,12 +918,12 @@ public class SampleAPI  {
     }
 
     public static boolean setAdmin(long groupid, String member, boolean admin, ResponseHandler handler) {
-        if(TextUtils.isEmpty(mToken) || 0 == groupid || TextUtils.isEmpty(member))
+        if(0 == groupid || TextUtils.isEmpty(member))
             return false;
 
-        Bundle b = new Bundle();
-        b.putString("op", "setadmin");
-        b.putString("token", mToken);
+        Bundle b = createPostBundle("setadmin");
+        if(null == b) return false;
+
         b.putLong("gid", groupid);
         b.putString("m", member);
         b.putInt("admin", admin?1:0);
@@ -944,35 +942,6 @@ public class SampleAPI  {
         }
 
         return str;
-    }
-
-
-    public static boolean setStringValue(String key, String value) {
-        try {
-            synchronized (mSharedPref) {
-                SharedPreferences.Editor poEditor = mSharedPref.edit();
-                poEditor.putString(key, value);
-                poEditor.commit();
-                //backup();
-                return true;
-            }
-        } catch (Exception e) {
-            Log.d(TAG, "Unable to set long value in RMS:" + e.getMessage());
-            return false;
-        }
-    }
-
-    public static String getStringValue(String key, String defaultVal) {
-        try {
-            synchronized (mSharedPref) {
-                if (mSharedPref.contains(key))
-                    return mSharedPref.getString(key, defaultVal);
-                return defaultVal;
-            }
-        } catch (Exception e) {
-            Log.d(TAG, "Unable to fet long value in RMS:" + e.getMessage());
-            return defaultVal;
-        }
     }
 
     public static void notify(String channelid, int id, String title, String message) {
@@ -1100,9 +1069,9 @@ public class SampleAPI  {
             return;
         }
 
-        Bundle b = new Bundle();
-        b.putString("op", "setnotify");
-        b.putString("token", mToken);
+        Bundle b = createPostBundle("setnotify");
+        if(null == b) return;
+
         b.putString("notifytoken", mGCMToken);
 
         ResponseHandler http = new ResponseHandler() {
