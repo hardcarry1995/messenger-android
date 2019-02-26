@@ -83,6 +83,6 @@ dependencies {
 
 }
 
-// this line need to be at bottom else it gives error of version conflict
+// this line needs to be at bottom else it gives error of version conflict
 apply plugin: 'com.google.gms.google-services'
 
