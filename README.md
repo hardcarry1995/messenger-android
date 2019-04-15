@@ -67,6 +67,9 @@ These apps also use following third party libraries/services.
 - [Facebook AccountKit](https://www.accountkit.com/) for the Phone Verification
 - [Google Maps](https://developers.google.com/maps/documentation/) and [Google Places](https://cloud.google.com/maps-platform/places/) SDKs for Geolocation integration 
 
+# Backend
+The backend code is here https://github.com/mesibo/messenger-app-backend
+
 ## Documentation & Tutorials
 
 - [Mesibo Documentation](https://mesibo.com/documentation/) 
