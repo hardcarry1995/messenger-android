@@ -15,9 +15,10 @@ Latest versions are also available through Google Play Store and Apple App Store
 
 <a href="https://play.google.com/store/apps/details?id=com.mesibo.mesiboapplication"><img
   alt="Get it on Google Play" height="80"
-  src="https://play.google.com/intl/en_us/badges/images/generic/en_badge_web_generic.png" /></a> <a href="https://itunes.apple.com/us/app/mesibo-realtime-messaging-voice-video/id1222921751"><img
-  alt="Get it on Apple App Store" height="80"
-  src="https://mesibo.com/documentation/images/app/apple_app_store.png" /></a>
+  src="https://play.google.com/intl/en_us/badges/images/generic/en_badge_web_generic.png" /></a> 
+  <a href="https://itunes.apple.com/us/app/mesibo-realtime-messaging-voice-video/id1222921751">
+  <img alt="Get it on Apple App Store" height="80"
+  src="https://media.mesibo.com/files/mesibo/appstore.png" /></a>
 
 ## Downloading the Source Code
 
