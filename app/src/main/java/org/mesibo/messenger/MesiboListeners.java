@@ -46,6 +46,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.support.v4.app.Fragment;
 import android.support.v4.view.MenuItemCompat;
 import android.text.TextUtils;
 import android.util.Log;
@@ -54,6 +55,8 @@ import android.view.MenuItem;
 import android.view.View;
 
 import com.google.gson.Gson;
+import com.mesibo.calls.MesiboVideoCallFragment;
+import com.mesibo.calls.MesiboAudioCallFragment;
 import com.mesibo.contactutils.*;
 
 import com.mesibo.api.Mesibo;
@@ -373,6 +376,21 @@ public class MesiboListeners implements Mesibo.ConnectionListener, ILoginInterfa
     }
 
     @Override
+    public MesiboVideoCallFragment MesiboCall_getVideoCallFragment(Mesibo.UserProfile userProfile) {
+        return null;
+    }
+
+    @Override
+    public MesiboAudioCallFragment MesiboCall_getAudioCallFragment(Mesibo.UserProfile userProfile) {
+        return null;
+    }
+
+    @Override
+    public Fragment MesiboCall_getIncomingAudioCallFragment(Mesibo.UserProfile userProfile) {
+        return null;
+    }
+
+    @Override
     public void Mesibo_onForeground(Context context, int screenId, boolean foreground) {
 
         //userlist is in foreground
@@ -517,6 +535,7 @@ public class MesiboListeners implements Mesibo.ConnectionListener, ILoginInterfa
     }
 
 
+
     @Override
     public void Mesibo_onGCMToken(String token) {
         SampleAPI.setGCMToken(token);
@@ -526,4 +545,6 @@ public class MesiboListeners implements Mesibo.ConnectionListener, ILoginInterfa
     public void Mesibo_onGCMMessage(Bundle data, boolean inService) {
         SampleAPI.onGCMMessage(inService);
     }
+
+
 }
