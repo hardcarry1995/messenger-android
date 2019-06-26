@@ -83,39 +83,29 @@
             </intent-filter>
         </receiver>
 
-        <receiver
-            android:name="com.google.android.gms.gcm.GcmReceiver"
-            android:exported="true"
-            android:permission="com.google.android.c2dm.permission.SEND" >
+        <!-- Firebase Notifications-->
+        <service android:name=".fcm.MesiboGcmListenerService">
             <intent-filter>
-                <action android:name="com.google.android.c2dm.intent.RECEIVE" />
-                <action android:name="com.google.android.c2dm.intent.REGISTRATION" />
-                <category android:name="org.mesibo.messenger" />
-            </intent-filter>
-        </receiver>
-
-        <service
-            android:name=".gcm.MesiboGcmListenerService"
-            android:exported="false" >
-            <intent-filter>
-                <action android:name="com.google.android.c2dm.intent.RECEIVE" />
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
             </intent-filter>
         </service>
-        <service
-            android:name=".gcm.MesiboInstanceIDListenerService"
+
+        <service android:name=".fcm.MesiboInstanceIDListenerService"
             android:exported="false">
+
             <intent-filter>
                 <action android:name="com.google.android.gms.iid.InstanceID" />
             </intent-filter>
         </service>
         <service
-            android:name=".gcm.MesiboRegistrationIntentService"
-            android:exported="false">
-        </service>
-        <service
-            android:name=".gcm.MesiboJobIntentService"
+            android:name=".fcm.MesiboRegistrationIntentService"
             android:exported="false"
             android:permission="android.permission.BIND_JOB_SERVICE"/>
+        <service
+            android:name=".fcm.MesiboJobIntentService"
+            android:exported="false"
+            android:permission="android.permission.BIND_JOB_SERVICE" />
+
 
     </application>
 

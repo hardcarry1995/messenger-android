@@ -63,12 +63,13 @@ dependencies {
     implementation "com.android.support:design:${project.Mesibo_supportLibVersion}"
     implementation "com.android.support:preference-v7:${project.Mesibo_supportLibVersion}"
 
-    implementation 'com.facebook.android:account-kit-sdk:4.+'
+    implementation 'com.facebook.android:account-kit-sdk:5.+'
 
     implementation "com.google.android.gms:play-services-maps:${project.Mesibo_playServiceVersion}"
     implementation "com.google.android.gms:play-services-location:${project.Mesibo_playServiceVersion}"
     implementation "com.google.android.gms:play-services-places:${project.Mesibo_playServiceVersion}"
-    implementation "com.google.android.gms:play-services-gcm:${project.Mesibo_playServiceVersion}"
+    implementation "com.google.firebase:firebase-messaging:18.0.0"
+    implementation 'com.google.firebase:firebase-core:16.0.9'
 
     implementation 'com.intuit.sdp:sdp-android:1.0.6'
     annotationProcessor 'com.jakewharton:butterknife:7.0.1'

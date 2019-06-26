@@ -55,7 +55,7 @@ import com.google.gson.Gson;
 import com.mesibo.api.Mesibo;
 import com.mesibo.contactutils.ContactUtils;
 import com.mesibo.mediapicker.MediaPicker;
-import org.mesibo.messenger.gcm.MesiboRegistrationIntentService;
+import org.mesibo.messenger.fcm.MesiboRegistrationIntentService;
 import com.mesibo.calls.MesiboCall;
 
 
@@ -86,6 +86,7 @@ public class SampleAPI  {
     public static final int VISIBILITY_UNCHANGED = 2;
 
     private static final String DEFAULT_FILE_URL = "https://media.mesibo.com/files/";
+    private static String FCM_SENDER_ID="470359684336";
 
 
     public static abstract class ResponseHandler implements Mesibo.HttpListener {
@@ -650,7 +651,7 @@ public class SampleAPI  {
 
     public static boolean startMesibo(boolean resetContacts) {
 
-        MesiboRegistrationIntentService.startRegistration(mContext, "946969055788", MesiboListeners.getInstance());
+        MesiboRegistrationIntentService.startRegistration(mContext, FCM_SENDER_ID, MesiboListeners.getInstance());
 
         // set path for storing DB and messaging files
         Mesibo.setPath(Environment.getExternalStorageDirectory().getAbsolutePath());
@@ -1073,6 +1074,7 @@ public class SampleAPI  {
         if(null == b) return;
 
         b.putString("notifytoken", mGCMToken);
+        b.putString("senderid", FCM_SENDER_ID);
 
         ResponseHandler http = new ResponseHandler() {
             @Override

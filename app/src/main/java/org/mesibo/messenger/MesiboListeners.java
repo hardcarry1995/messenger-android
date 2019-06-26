@@ -60,7 +60,7 @@ import com.mesibo.calls.MesiboAudioCallFragment;
 import com.mesibo.contactutils.*;
 
 import com.mesibo.api.Mesibo;
-import org.mesibo.messenger.gcm.MesiboRegistrationIntentService;
+import org.mesibo.messenger.fcm.MesiboRegistrationIntentService;
 import com.mesibo.calls.MesiboCall;
 import com.mesibo.uihelper.WelcomeScreen;
 import com.mesibo.uihelper.ILoginInterface;
@@ -542,7 +542,7 @@ public class MesiboListeners implements Mesibo.ConnectionListener, ILoginInterfa
     }
 
     @Override
-    public void Mesibo_onGCMMessage(Bundle data, boolean inService) {
+    public void Mesibo_onGCMMessage(/*Bundle data,*/ boolean inService) {
         SampleAPI.onGCMMessage(inService);
     }
 

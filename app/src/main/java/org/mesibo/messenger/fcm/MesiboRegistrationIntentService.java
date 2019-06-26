@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-package org.mesibo.messenger.gcm;
+package org.mesibo.messenger.fcm;
+
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -27,12 +28,11 @@ import android.util.Log;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
-import com.google.android.gms.gcm.GcmPubSub;
-import com.google.android.gms.gcm.GoogleCloudMessaging;
-import com.google.android.gms.iid.InstanceID;
+import com.google.firebase.FirebaseApp;
+import com.google.firebase.iid.FirebaseInstanceId;
+
 
 import java.io.IOException;
-
 
 
 public class MesiboRegistrationIntentService extends JobIntentService {
@@ -48,7 +48,7 @@ public class MesiboRegistrationIntentService extends JobIntentService {
 
     public interface GCMListener {
         void Mesibo_onGCMToken(String token);
-        void Mesibo_onGCMMessage(Bundle data, boolean inService);
+        void Mesibo_onGCMMessage( boolean inService);
     }
 
     @Override
@@ -58,22 +58,17 @@ public class MesiboRegistrationIntentService extends JobIntentService {
 
     //@Override
     protected void onHandleIntent(Intent intent) {
-        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
-
         String token = null;
         try {
-            // [START register_for_gcm]
-            // Initially this call goes out to the network to retrieve the token, subsequent calls
-            // are local.
-            // Sender ID is typically derived from google-services.json.
-            // See https://developers.google.com/cloud-messaging/android/start for details on this file.
-            InstanceID instanceID = InstanceID.getInstance(this);
-            token = instanceID.getToken(SENDER_ID, GoogleCloudMessaging.INSTANCE_ID_SCOPE, null);
-            // [END get_token]
-            Log.i(TAG, "GCM Registration Token: " + token);
 
-            // Subscribe to topic channels
-            subscribeTopics(token);
+            FirebaseInstanceId instanceID = (FirebaseInstanceId) FirebaseInstanceId.getInstance(FirebaseApp.initializeApp(this));
+            if(null == instanceID) {
+                Log.d(TAG, "FCM getInstance Failed");
+                return;
+            }
+          token = instanceID.getToken();
+            Log.d(TAG, "FCM Registration Token: " + token);
+
 
         } catch (Exception e) {
             Log.d(TAG, "Failed to complete token refresh", e);
@@ -100,15 +95,15 @@ public class MesiboRegistrationIntentService extends JobIntentService {
     /**
      * Subscribe to any GCM topics of interest, as defined by the TOPICS constant.
      *
-     * @param token GCM token
+
      * @throws IOException if unable to reach the GCM PubSub service
      */
     // [START subscribe_topics]
     private void subscribeTopics(String token) throws IOException {
-        GcmPubSub pubSub = GcmPubSub.getInstance(this);
-        for (String topic : TOPICS) {
-            pubSub.subscribe(token, "/topics/" + topic, null);
-        }
+//        GcmPubSub pubSub = GcmPubSub.getInstance(this);
+//        for (String topic : TOPICS) {
+//            pubSub.subscribe(token, "/topics/" + topic, null);
+//        }
     }
     // [END subscribe_topics]
 
@@ -139,9 +134,9 @@ public class MesiboRegistrationIntentService extends JobIntentService {
         }
     }
 
-    public static void sendMessageToListener(Bundle data, boolean inService) {
+    public static void sendMessageToListener( boolean inService) {
         if(null != mListener) {
-            mListener.Mesibo_onGCMMessage(data, inService);
+            mListener.Mesibo_onGCMMessage( inService);
         }
     }
 }

@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-package org.mesibo.messenger.gcm;
+package org.mesibo.messenger.fcm;
 
-import com.google.android.gms.iid.InstanceIDListenerService;
+import com.google.firebase.messaging.FirebaseMessagingService;
 
-public class MesiboInstanceIDListenerService extends InstanceIDListenerService {
+public class MesiboInstanceIDListenerService extends FirebaseMessagingService {
 
     private static final String TAG = "MyInstanceIDLS";
 
@@ -27,10 +27,12 @@ public class MesiboInstanceIDListenerService extends InstanceIDListenerService {
      * the previous token had been compromised. This call is initiated by the
      * InstanceID provider.
      */
+
+
     @Override
-    public void onTokenRefresh() {
-        // Fetch updated Instance ID token and notify our app's server of any changes (if applicable).
+    public void onNewToken(String s) {
+        super.onNewToken(s);
+       ///  Fetch updated Instance ID token and notify our app's server of any changes (if applicable).
         MesiboRegistrationIntentService.startRegistration(this, null, null);
     }
-
 }
