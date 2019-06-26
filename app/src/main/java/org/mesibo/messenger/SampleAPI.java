@@ -1074,7 +1074,7 @@ public class SampleAPI  {
         if(null == b) return;
 
         b.putString("notifytoken", mGCMToken);
-        b.putString("senderid", FCM_SENDER_ID);
+        b.putString("fcmid", FCM_SENDER_ID);
 
         ResponseHandler http = new ResponseHandler() {
             @Override
