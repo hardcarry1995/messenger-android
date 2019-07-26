@@ -39,6 +39,7 @@
  */
 
 package org.mesibo.messenger.fcm;
+
 import android.content.Context;
 import android.content.Intent;
 import android.os.Handler;
@@ -66,7 +67,7 @@ public class MesiboJobIntentService extends JobIntentService {
     @Override
     protected void onHandleWork(Intent intent) {
         try {
-        MesiboRegistrationIntentService.sendMessageToListener( true);
+        MesiboRegistrationIntentService.sendMessageToListener(intent.getExtras(), true);
         } catch (Exception e) {
 
         }

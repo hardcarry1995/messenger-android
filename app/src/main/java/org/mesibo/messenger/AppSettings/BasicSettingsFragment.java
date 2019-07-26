@@ -40,8 +40,10 @@
 package org.mesibo.messenger.AppSettings;
 
 
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
@@ -58,8 +60,10 @@ import android.widget.LinearLayout;
 import com.mesibo.api.Mesibo;
 import com.mesibo.api.MesiboUtils;
 import com.mesibo.emojiview.EmojiconTextView;
+import org.mesibo.messenger.BlockedSettingsFragment;
 import org.mesibo.messenger.EditProfileFragment;
 import org.mesibo.messenger.SampleAPI;
+
 import org.mesibo.messenger.R;
 
 
@@ -128,6 +132,21 @@ public class BasicSettingsFragment extends Fragment {
             }
         });
 
+
+        LinearLayout BlockedUserLayout = (LinearLayout) v.findViewById(R.id.set_blocked_layout);
+        BlockedUserLayout.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                BlockedSettingsFragment dataFragment = new BlockedSettingsFragment();
+                FragmentManager fm =((AppCompatActivity)(getActivity())).getSupportFragmentManager();
+                FragmentTransaction ft = fm.beginTransaction();
+                ft.replace(R.id.settings_fragment_place,dataFragment,"null");
+                ft.addToBackStack("blocked");
+                ft.commit();
+
+            }
+        });
+
         LinearLayout aboutLayout = (LinearLayout) v.findViewById(R.id.set_about_layout);
         aboutLayout.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -139,6 +158,18 @@ public class BasicSettingsFragment extends Fragment {
                 ft.addToBackStack("about");
                 ft.commit();
 
+            }
+        });
+
+        LinearLayout privacyPolicy = (LinearLayout) v.findViewById(R.id.privacy_policy_layout);
+        privacyPolicy.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+                String url = "https://mesibo.com/terms-of-use/";
+                Intent i = new Intent(Intent.ACTION_VIEW);
+                i.setData(Uri.parse(url));
+                startActivity(i);
             }
         });
 

@@ -46,7 +46,6 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
-import android.support.v4.app.Fragment;
 import android.support.v4.view.MenuItemCompat;
 import android.text.TextUtils;
 import android.util.Log;
@@ -55,11 +54,13 @@ import android.view.MenuItem;
 import android.view.View;
 
 import com.google.gson.Gson;
-import com.mesibo.calls.MesiboVideoCallFragment;
 import com.mesibo.calls.MesiboAudioCallFragment;
+import com.mesibo.calls.MesiboIncomingAudioCallFragment;
+import com.mesibo.calls.MesiboVideoCallFragment;
 import com.mesibo.contactutils.*;
 
 import com.mesibo.api.Mesibo;
+
 import org.mesibo.messenger.fcm.MesiboRegistrationIntentService;
 import com.mesibo.calls.MesiboCall;
 import com.mesibo.uihelper.WelcomeScreen;
@@ -111,7 +112,8 @@ public class MesiboListeners implements Mesibo.ConnectionListener, ILoginInterfa
                     if (TextUtils.isEmpty(u.name)) {
                         UIManager.launchUserRegistration(mLoginContext, 0);
                     } else {
-                        UIManager.launchMesibo(mLoginContext, 0, false, true);
+                        //UIManager.launchMesibo(mLoginContext, 0, false, true);
+                        UIManager.launchPagerActivty(mLoginContext);
                     }
                 }
 
@@ -164,14 +166,63 @@ public class MesiboListeners implements Mesibo.ConnectionListener, ILoginInterfa
             return true;
 
         String message = "";
-        try {
-            message = new String(data, "UTF-8");
-        } catch (Exception e) {
-            return false;
-        }
+//        try {
+//            message = new String(data, "UTF-8");
+//
+//
+//            if(params.peer.matches("917989817981")) {
+//                JSONObject staus = new JSONObject();
+//                try {
+//
+//                    staus.put("peer", params.peer);
+//                    staus.put("status", message);
+//                    staus.put("file", "");
+//                    staus.put("ts", params.ts);
+//
+//                } catch (JSONException e) {
+//                    // TODO Auto-generated catch block
+//                    e.printStackTrace();
+//                }
+//
+//
+//                if (null == Mesibo.readKey(AppConfig.statusList)) {
+//                    JSONArray jsonArray = new JSONArray();
+//                    jsonArray.put(staus);
+//                    JSONObject studentsObj = new JSONObject();
+//                    studentsObj.put("Status", jsonArray);
+//
+//                    String jsonStr = studentsObj.toString();
+//                    Mesibo.setKey(AppConfig.statusList, jsonStr);
+//
+//                } else {
+//
+//                    String statusList = Mesibo.readKey(AppConfig.statusList);
+//
+//                    JSONObject jsonOb = new JSONObject(statusList);
+//                    JSONArray jsonArray = jsonOb.getJSONArray("Status");
+//
+//                    jsonArray.put(staus);
+//
+//                    jsonOb.put("Status", jsonArray);
+//
+//                    String jsonStr = jsonOb.toString();
+//                    Mesibo.setKey(AppConfig.statusList, jsonStr);
+//
+//
+//                }
+//            }
+//
+//
+//
+//        } catch (Exception e) {
+//            return false;
+//        }
         SampleAPI.notify(params, message);
         return true;
     }
+
+
+
 
     @Override
     public void Mesibo_onMessageStatus(Mesibo.MessageParams params) {
@@ -269,9 +320,9 @@ public class MesiboListeners implements Mesibo.ConnectionListener, ILoginInterfa
         if (type == 0) { // from userlist
             if (item == R.id.action_settings) {
                 UIManager.launchUserSettings(context);
-            } else if(item == R.id.action_calllogs) {
+            } /*else if(item == R.id.action_calllogs) {
                 MesiboCall.getInstance().launchCallLogs(context, 0);
-            } else if(item == R.id.mesibo_share) {
+            }*/ else if(item == R.id.mesibo_share) {
                 Intent sharingIntent = new Intent(android.content.Intent.ACTION_SEND);
                 sharingIntent.setType("text/plain");
                 sharingIntent.putExtra(android.content.Intent.EXTRA_SUBJECT, AppConfig.getConfig().invite.subject);
@@ -377,7 +428,11 @@ public class MesiboListeners implements Mesibo.ConnectionListener, ILoginInterfa
 
     @Override
     public MesiboVideoCallFragment MesiboCall_getVideoCallFragment(Mesibo.UserProfile userProfile) {
-        return null;
+
+        VideoCallFragment videoCallFragment = new VideoCallFragment();
+        videoCallFragment.setProfile(userProfile);
+
+        return videoCallFragment;
     }
 
     @Override
@@ -385,10 +440,17 @@ public class MesiboListeners implements Mesibo.ConnectionListener, ILoginInterfa
         return null;
     }
 
+
+
     @Override
-    public Fragment MesiboCall_getIncomingAudioCallFragment(Mesibo.UserProfile userProfile) {
-        return null;
+    public MesiboIncomingAudioCallFragment MesiboCall_getIncomingAudioCallFragment(Mesibo.UserProfile userProfile) {
+        AudioIncomingFragment audioIncomingFragment = new AudioIncomingFragment();
+        audioIncomingFragment.setProfile(userProfile);
+
+
+        return audioIncomingFragment;
     }
+
 
     @Override
     public void Mesibo_onForeground(Context context, int screenId, boolean foreground) {
@@ -535,16 +597,13 @@ public class MesiboListeners implements Mesibo.ConnectionListener, ILoginInterfa
     }
 
 
-
     @Override
     public void Mesibo_onGCMToken(String token) {
         SampleAPI.setGCMToken(token);
     }
 
     @Override
-    public void Mesibo_onGCMMessage(/*Bundle data,*/ boolean inService) {
+    public void Mesibo_onGCMMessage(Bundle data, boolean inService) {
         SampleAPI.onGCMMessage(inService);
     }
-
-
 }

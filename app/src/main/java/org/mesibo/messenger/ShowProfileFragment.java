@@ -40,6 +40,7 @@
 
 package org.mesibo.messenger;
 
+import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -69,6 +70,7 @@ import android.widget.TextView;
 import com.mesibo.api.Mesibo;
 import com.mesibo.api.MesiboUtils;
 import com.mesibo.emojiview.EmojiconTextView;
+
 import org.mesibo.messenger.Utils.AppUtils;
 
 
@@ -327,7 +329,23 @@ public class ShowProfileFragment extends Fragment implements Mesibo.MessageListe
 
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+
+
+
         inflater.inflate(R.menu.user_profile_menu, menu);
+
+
+
+        if (null != mUser && mUser.isBlocked()) {
+
+            MenuItem menuItem = menu.findItem(R.id.menu_user_block);
+            if(null!= menuItem)
+                menuItem.setTitle("Unblock");
+
+        }
+
+
+
         super.onCreateOptionsMenu(menu, inflater);
     }
 
@@ -336,6 +354,40 @@ public class ShowProfileFragment extends Fragment implements Mesibo.MessageListe
         switch (item.getItemId()) {
             case android.R.id.home:
                 getActivity().onBackPressed();
+                return true;
+
+            case R.id.menu_user_block:
+
+
+                    //Check if user is blocked or unblocked, handle accordingly
+                    if (null != mUser && mUser.isBlocked()) {
+
+                        mUser.blockMessages(false);
+                        mUser.blockGroupMessages(false);
+                        Mesibo.setUserProfile(mUser, false);
+
+                    } else {
+
+
+                        Mesibo.UserProfile mUserProfile = new Mesibo.UserProfile();
+
+                        mUserProfile.address = mUser.address;
+                        mUserProfile.name = mUser.name;
+                        mUserProfile.picturePath = mUser.picturePath;
+                        mUserProfile.status = mUser.status;
+
+                        mUserProfile.blockMessages(true);
+                        mUserProfile.blockGroupMessages(true);
+                        Mesibo.setUserProfile(mUserProfile, false);
+
+                    }
+
+
+
+
+
+                ((Activity)getActivity()).invalidateOptionsMenu();
+
                 return true;
         }
 

@@ -41,7 +41,6 @@ package org.mesibo.messenger;
  */
 
 import com.google.gson.Gson;
-import com.mesibo.calls.MesiboCall;
 
 import android.app.backup.BackupManager;
 import android.content.Context;
@@ -52,6 +51,19 @@ public class AppConfig {
     private static final String TAG = "AppSettings";
     public static final String sharedPrefKey = "org.mesibo.messenger";
     private static final String systemPreferenceKey = "settings";
+
+    public static final int MESSAGECONTEXTACTION_FORWARD = 1;
+    public static final int MESSAGECONTEXTACTION_REPLY = 2;
+    public static final int MESSAGECONTEXTACTION_RESEND = 3;
+    public static final int MESSAGECONTEXTACTION_DELETE = 4;
+    public static final int MESSAGECONTEXTACTION_COPY = 5;
+    public static final int MESSAGECONTEXTACTION_FAVORITE = 6;
+    public static final int MESSAGECONTEXTACTION_SHARE = 7;
+
+    public static final int Grey_color = 0xffc9c9c9;
+    public static final int Transparent = 0x00000000;
+
+    public static final String statusList = "statusList";
 
     public static class Configuration {
         public String token = "";

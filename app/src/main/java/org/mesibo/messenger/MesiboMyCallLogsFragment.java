@@ -1,3 +1,4 @@
+
 /** Copyright (c) 2019 Mesibo
  * https://mesibo.com
  * All rights reserved.
@@ -37,44 +38,46 @@
  * https://github.com/mesibo/messenger-app-android
  *
  */
-package org.mesibo.messenger.AppSettings;
 
-import android.graphics.Typeface;
-import android.os.Bundle;
-import android.support.v4.app.Fragment;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.TextView;
+package org.mesibo.messenger;
 
-import org.mesibo.messenger.BuildConfig;
+import android.util.Log;
 
-import org.mesibo.messenger.R;
+import com.mesibo.calls.MesiboCallLogsFragment;
 
-public class AboutFragment extends Fragment {
 
-    @Override
-    public View onCreateView(LayoutInflater inflater, final ViewGroup container,
-                             Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
-        setHasOptionsMenu(true);
+public class MesiboMyCallLogsFragment extends MesiboCallLogsFragment {
 
-        View v = inflater.inflate(R.layout.about, container, false);
+    private static final String TAG = "MyCallLogsFragment";
 
-        TextView tx = (TextView)v.findViewById(R.id.mesibologo);
+    public MesiboMyCallLogsFragment() {
 
-        Typeface mesiboFont = Typeface.createFromAsset(getActivity().getAssets(),  "fonts/mesibo_regular.otf");
-
-        if(null != mesiboFont)
-            tx.setTypeface(mesiboFont);
-
-        TextView version = (TextView)v.findViewById(R.id.version);
-        TextView buildDate = (TextView)v.findViewById(R.id.builddate);
-
-        version.setText("Version: " + BuildConfig.BUILD_VERSION);
-        buildDate.setText("Build Time: " + BuildConfig.BUILD_TIMESTAMP);
-
-        return v;
     }
 
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        Log.d(TAG,"**********************************Call Logs onPause Called************************************************");
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        Log.d(TAG,"***********************************************************Call Logs onResume Called**************************************************************************");
+    }
+
+
+    @Override
+    public void setUserVisibleHint(boolean isVisibleToUser) {
+        super.setUserVisibleHint(isVisibleToUser);
+        if (isVisibleToUser) {
+
+            Log.d(TAG,"********************************************************************Call Logs Fragment Visible*****************************************************************");
+
+        }
+        else {
+            Log.d(TAG,"***************************************************************************Call Logs Fragment Not Visible**********************************************************");
+        }
+    }
 }

@@ -112,7 +112,8 @@ public class StartUpActivity extends AppCompatActivity {
             overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
 
         } else {
-            UIManager.launchMesibo(this, 0, mRunInBackground, true);
+            //UIManager.launchMesibo(this, 0, mRunInBackground, true);
+            UIManager.launchPagerActivty(this);
         }
 
         finish();
