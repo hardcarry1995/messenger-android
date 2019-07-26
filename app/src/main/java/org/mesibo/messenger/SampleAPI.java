@@ -86,7 +86,7 @@ public class SampleAPI  {
     public static final int VISIBILITY_UNCHANGED = 2;
 
     private static final String DEFAULT_FILE_URL = "https://media.mesibo.com/files/";
-
+    private static String FCM_SENDER_ID="470359684336";
 
 
     public static abstract class ResponseHandler implements Mesibo.HttpListener {
@@ -185,10 +185,6 @@ public class SampleAPI  {
         }
 
         public abstract void HandleAPIResponse(Response response);
-    }
-
-    public interface ApiResponseHandler {
-        void onApiResponse(boolean result, String respString);
     }
 
     public static class Urls {
@@ -583,9 +579,7 @@ public class SampleAPI  {
             mAkAppId = ai.metaData.getString("com.facebook.sdk.ApplicationId");
         } catch (Exception e) {}
 
-
-        String token  = AppConfig.getConfig().token;
-        if(!TextUtils.isEmpty(token)) {
+        if(!TextUtils.isEmpty(AppConfig.getConfig().token)) {
             startMesibo(false);
             startSync();
         }
@@ -657,8 +651,7 @@ public class SampleAPI  {
 
     public static boolean startMesibo(boolean resetContacts) {
 
-//        MesiboRegistrationIntentService.startRegistration(mContext, "946969055788", MesiboListeners.getInstance());
-        MesiboRegistrationIntentService.startRegistration(mContext, "470359684336", MesiboListeners.getInstance());
+        MesiboRegistrationIntentService.startRegistration(mContext, FCM_SENDER_ID, MesiboListeners.getInstance());
 
         // set path for storing DB and messaging files
         Mesibo.setPath(Environment.getExternalStorageDirectory().getAbsolutePath());
@@ -733,8 +726,6 @@ public class SampleAPI  {
         invokeApi(null, b, null, null, false);
         return true;
     }
-
-
 
     public static void forceLogout(){
         mGCMTokenSent = false;
@@ -954,48 +945,6 @@ public class SampleAPI  {
         return str;
     }
 
-
-    public static void getLinkPreview(String q,final ApiResponseHandler handler) {
-
-        Mesibo.Http http = new Mesibo.Http();
-
-        http.url = "http://api.linkpreview.net/?key=5d04a893457c8c32e57398a4a3d95cb29ce12ae30e18f&q="+q;
-
-        http.onMainThread = true;
-
-        http.listener = new Mesibo.HttpListener() {
-            @Override
-            public boolean Mesibo_onHttpProgress(Mesibo.Http config, int state, int percent) {
-
-
-                if (100 == percent && Mesibo.Http.STATE_DOWNLOAD == state) {
-
-                    //parse response
-                    String respString = config.getDataString();
-
-
-
-                    if (null == respString || respString.equalsIgnoreCase("")) {
-                        handler.onApiResponse(false, null);
-                        return true;
-                    }
-
-                    handler.onApiResponse(true, respString);
-                    return true;
-                }
-
-                if (percent < 0)
-                    handler.onApiResponse(false, null);
-
-                return true;
-            }
-        };
-
-        http.execute();
-    }
-
-
-
     public static void notify(String channelid, int id, String title, String message) {
         mNotifyUser.sendNotification(channelid, id, title, message);
     }
@@ -1109,8 +1058,6 @@ public class SampleAPI  {
             return;
         }
 
-        Mesibo.setPushToken(mGCMToken);
-
         synchronized (SampleAPI.class) {
             if(mGCMTokenSent)
                 return;
@@ -1123,13 +1070,11 @@ public class SampleAPI  {
             return;
         }
 
-
-
         Bundle b = createPostBundle("setnotify");
         if(null == b) return;
 
         b.putString("notifytoken", mGCMToken);
-        b.putInt("fcm",1);
+        b.putString("fcmid", FCM_SENDER_ID);
 
         ResponseHandler http = new ResponseHandler() {
             @Override

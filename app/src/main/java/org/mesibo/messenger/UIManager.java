@@ -42,23 +42,22 @@ package org.mesibo.messenger;
 
 import android.Manifest;
 import android.app.Activity;
-import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.view.Gravity;
+import android.view.LayoutInflater;
 import android.view.View;
-import android.webkit.MimeTypeMap;
-import android.widget.Toast;
+import android.widget.PopupWindow;
+import android.view.ViewGroup.LayoutParams;
 
-import com.mesibo.api.Mesibo;
-import com.mesibo.calls.MesiboCall;
 import com.mesibo.mediapicker.AlbumListData;
 import com.mesibo.mediapicker.MediaPicker;
 
 import org.mesibo.messenger.AppSettings.SettingsActivity;
-
 import com.mesibo.uihelper.ILoginInterface;
 import com.mesibo.uihelper.IProductTourListener;
 import com.mesibo.uihelper.MesiboUiHelper;
@@ -69,6 +68,8 @@ import com.mesibo.messaging.MesiboUI;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import static android.content.Context.LAYOUT_INFLATER_SERVICE;
 
 public class UIManager {
 
@@ -83,11 +84,6 @@ public class UIManager {
     public static void launchMesibo(Context context, int flag, boolean startInBackground, boolean keepRunningOnBackPressed) {
         mMesiboLaunched = true;
         MesiboUI.launch(context, flag, startInBackground, keepRunningOnBackPressed);
-    }
-
-    public static void launchPagerActivty(Context context){
-
-        context.startActivity(new Intent(context, MesiboMainActivity.class));
     }
 
     public static void launchMesiboContacts(Context context, long forwardid, int selectionMode, int flag, Bundle bundle) {
@@ -186,17 +182,6 @@ public class UIManager {
         MesiboUiHelper.launchAccountKit(context, true, loginInterface, null);
     }
 
-    public static void showOnCallProgressGreenBar(View view){
-        if(MesiboCall.getInstance().isCallInProgress()){
-
-            view.setVisibility(View.VISIBLE);
-        }else{
-            view.setVisibility(View.GONE);
-        }
-    }
-
-
-
     public static void showAlert(Context context, String title, String message, DialogInterface.OnClickListener pl, DialogInterface.OnClickListener nl) {
         if(null == context) {
             return; //
@@ -219,39 +204,5 @@ public class UIManager {
 
     public static void showAlert(Context context, String title, String message) {
         showAlert(context, title, message, null, null);
-    }
-
-    public static void openMedia(Context context, String fileUrl, String filePath){
-
-        MimeTypeMap myMime = MimeTypeMap.getSingleton();
-        Intent newIntent = new Intent(Intent.ACTION_VIEW);
-        String mimeType = myMime.getMimeTypeFromExtension(fileExt(fileUrl));
-        newIntent.setDataAndType( Mesibo.uriFromFile(context,filePath), mimeType);
-        newIntent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-        try {
-            context.startActivity(newIntent);
-        } catch (ActivityNotFoundException e) {
-            Toast.makeText(context, "No App found for this type of file.", Toast.LENGTH_LONG).show();
-        }
-
-    }
-
-    public static String fileExt(String url) {
-        if (url.indexOf("?") > -1) {
-            url = url.substring(0, url.indexOf("?"));
-        }
-        if (url.lastIndexOf(".") == -1) {
-            return null;
-        } else {
-            String ext = url.substring(url.lastIndexOf(".") + 1);
-            if (ext.indexOf("%") > -1) {
-                ext = ext.substring(0, ext.indexOf("%"));
-            }
-            if (ext.indexOf("/") > -1) {
-                ext = ext.substring(0, ext.indexOf("/"));
-            }
-            return ext.toLowerCase();
-
-        }
     }
 }

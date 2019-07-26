@@ -48,7 +48,6 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import org.mesibo.messenger.BuildConfig;
-
 import org.mesibo.messenger.R;
 
 public class AboutFragment extends Fragment {

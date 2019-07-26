@@ -42,7 +42,6 @@ package org.mesibo.messenger;
 
 
 import android.Manifest;
-import android.annotation.SuppressLint;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -83,7 +82,6 @@ import com.mesibo.emojiview.EmojiconsPopup;
 import com.mesibo.emojiview.emoji.Emojicon;
 import com.mesibo.mediapicker.MediaPicker;
 import com.mesibo.messaging.MesiboActivity;
-
 import org.mesibo.messenger.Utils.AppUtils;
 
 import java.io.File;
@@ -157,7 +155,6 @@ public class EditProfileFragment extends android.support.v4.app.Fragment impleme
     public void activateInSettingsMode() {
         mSettingsMode = true;
     }
-    @SuppressLint("HandlerLeak")
     private SampleAPI.ResponseHandler mHandler = new SampleAPI.ResponseHandler() {
         @Override
         public void HandleAPIResponse(SampleAPI.Response response) {
@@ -344,7 +341,6 @@ public class EditProfileFragment extends android.support.v4.app.Fragment impleme
         mNameCharCounter.setText(String.valueOf(MAX_NAME_CHAR));
 
         mEmojiNameEditText = (EmojiconEditText) v.findViewById(R.id.name_emoji_edittext);
-        mEmojiNameEditText.setEnabled(false);
         if(!TextUtils.isEmpty(mProfile.name))
             mEmojiNameEditText.setText(mProfile.name);
         mEmojiNameEditText.setFilters(new InputFilter[]{new InputFilter.LengthFilter(MAX_NAME_CHAR)});
@@ -371,7 +367,6 @@ public class EditProfileFragment extends android.support.v4.app.Fragment impleme
         mStatusCharCounter.setText(String.valueOf(MAX_STATUS_CHAR));
 
         mEmojiStatusEditText = (EmojiconEditText) v.findViewById(R.id.status_emoji_edittext);
-        mEmojiStatusEditText.setEnabled(false);
         if(!TextUtils.isEmpty(mProfile.status))
             mEmojiStatusEditText.setText(mProfile.status);
         mEmojiStatusEditText.setFilters(new InputFilter[]{new InputFilter.LengthFilter(MAX_STATUS_CHAR)});
@@ -397,19 +392,6 @@ public class EditProfileFragment extends android.support.v4.app.Fragment impleme
         mEmojiNameBtn = (ImageView) v.findViewById(R.id.name_emoji_btn);
         mEmojiStatusBtn = (ImageView) v.findViewById(R.id.status_emoji_btn);
 
-        mEmojiNameBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                mEmojiNameBtn.setVisibility(View.GONE);
-                mEmojiStatusEditText.setEnabled(true);
-                mEmojiNameEditText.setEnabled(true);
-
-                mEmojiNameEditText.requestFocus();
-            }
-        });
-
-
-
         FrameLayout rootView = (FrameLayout) v.findViewById(R.id.register_new_profile_rootlayout);
         // Give the topmost view of your activity layout hierarchy. This will be used to measure soft keyboard height
         final EmojiconsPopup popup = new EmojiconsPopup(rootView, getActivity());
@@ -434,8 +416,6 @@ public class EditProfileFragment extends android.support.v4.app.Fragment impleme
                 //If popup is not showing => emoji keyboard is not visible, we need to show it
                 if (!popup.isShowing()) {
 
-                    mEmojiStatusEditText.setEnabled(true);
-                    mEmojiNameEditText.setEnabled(true);
 
                     //If keyboard is visible, simply show the emoji popup
                     if (popup.isKeyBoardOpen()) {
@@ -460,16 +440,16 @@ public class EditProfileFragment extends android.support.v4.app.Fragment impleme
         };
 
 
-        //mEmojiNameBtn.setOnClickListener(emojilistener);
-       // mEmojiStatusBtn.setOnClickListener(emojilistener);
+        mEmojiNameBtn.setOnClickListener(emojilistener);
+        mEmojiStatusBtn.setOnClickListener(emojilistener);
 
-        //If the emoji popup is dismissed, change emojiButton to smiley icon
+                //If the emoji popup is dismissed, change emojiButton to smiley icon
         popup.setOnDismissListener(new PopupWindow.OnDismissListener() {
 
             @Override
             public void onDismiss() {
-                changeEmojiKeyboardIcon(mEmojiNameBtn, R.drawable.ic_action_edit);
-                changeEmojiKeyboardIcon(mEmojiStatusBtn, R.drawable.ic_action_edit);
+                changeEmojiKeyboardIcon(mEmojiNameBtn, R.drawable.ic_sentiment_satisfied_black_24dp);
+                changeEmojiKeyboardIcon(mEmojiStatusBtn, R.drawable.ic_sentiment_satisfied_black_24dp);
 
 
             }
@@ -485,10 +465,6 @@ public class EditProfileFragment extends android.support.v4.app.Fragment impleme
 
             @Override
             public void onKeyboardClose() {
-//                mEmojiStatusEditText.setEnabled(true);
-//                mEmojiNameEditText.setEnabled(true);
-//
-//                mEmojiNameEditText.requestFocus();
                 if (popup.isShowing())
                     popup.dismiss();
             }
@@ -536,12 +512,6 @@ public class EditProfileFragment extends android.support.v4.app.Fragment impleme
             }
         });
 
-
-
-
-
-
-
         return v;
     }
 
@@ -573,29 +543,17 @@ public class EditProfileFragment extends android.support.v4.app.Fragment impleme
 
     }
 
-    public static int getFileDrawable(Context context, String fileName) {
-        String ext = fileName.substring(fileName.lastIndexOf(".") + 1, fileName.length());
-        if(ext.length() > 3)
-            ext = ext.substring(0, 3);
-        int checkExistence = context.getResources().getIdentifier("file_" + ext, "drawable", context.getPackageName());
-        if ( checkExistence != 0 ) {  // the resouce exists...
-            return checkExistence;
-        }
-
-        return 0;
-    }
-
     public void openDialogue(String title, String message){
         AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(getActivity());
         //alertDialogBuilder.setTitle(title);
         alertDialogBuilder.setMessage(message);
-        alertDialogBuilder.setPositiveButton("OK",
-                new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface arg0, int arg1) {
+                alertDialogBuilder.setPositiveButton("OK",
+                        new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface arg0, int arg1) {
 
-                    }
-                });
+                            }
+                        });
 
 
         AlertDialog alertDialog = alertDialogBuilder.create();
@@ -650,4 +608,3 @@ public class EditProfileFragment extends android.support.v4.app.Fragment impleme
     }
 
 }
-

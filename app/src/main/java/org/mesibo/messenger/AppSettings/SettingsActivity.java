@@ -93,7 +93,7 @@ public class SettingsActivity extends AppCompatActivity {
     public  void onResume() {
         super.onResume();
 
-        if(!Mesibo.setAppInForeground(this, 0x100, true)) {
+        if(false && !Mesibo.setAppInForeground(this, 0x100, true)) {
             finish();
             return;
         }
@@ -106,7 +106,7 @@ public class SettingsActivity extends AppCompatActivity {
     @Override
     protected void onPause() {
         super.onPause();
-        Mesibo.setAppInForeground(this, 0x100, false);
+        //Mesibo.setAppInForeground(this, 0x100, false);
     }
 
     @Override
