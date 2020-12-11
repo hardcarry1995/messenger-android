@@ -55,13 +55,13 @@ import android.view.MenuItem;
 import android.view.View;
 
 import com.google.gson.Gson;
-import com.mesibo.calls.MesiboVideoCallFragment;
-import com.mesibo.calls.MesiboAudioCallFragment;
+
+import com.mesibo.calls.api.MesiboCall;
+import com.mesibo.calls.ui.MesiboCallUi;
 import com.mesibo.contactutils.*;
 
 import com.mesibo.api.Mesibo;
 import org.mesibo.messenger.fcm.MesiboRegistrationIntentService;
-import com.mesibo.calls.MesiboCall;
 import com.mesibo.uihelper.WelcomeScreen;
 import com.mesibo.uihelper.ILoginInterface;
 import com.mesibo.uihelper.IProductTourListener;
@@ -69,7 +69,8 @@ import com.mesibo.uihelper.ILoginResultsInterface;
 
 import java.util.ArrayList;
 
-public class MesiboListeners implements Mesibo.ConnectionListener, ILoginInterface, IProductTourListener, Mesibo.MessageListener, Mesibo.UIHelperListner, Mesibo.UserProfileLookupListener, ContactUtils.ContactsListener, Mesibo.MessageFilter, Mesibo.CrashListener, MesiboRegistrationIntentService.GCMListener, MesiboCall.MesiboCallListener {
+public class MesiboListeners implements Mesibo.ConnectionListener, ILoginInterface, IProductTourListener, Mesibo.MessageListener, Mesibo.UIHelperListner, Mesibo.UserProfileLookupListener, ContactUtils.ContactsListener, Mesibo.MessageFilter, Mesibo.CrashListener, MesiboRegistrationIntentService.GCMListener,
+        MesiboCallUi.Listener {
     public static final String TAG = "MesiboListeners";
     public static Context mLoginContext = null;
     private static Gson mGson = new Gson();
@@ -270,7 +271,7 @@ public class MesiboListeners implements Mesibo.ConnectionListener, ILoginInterfa
             if (item == R.id.action_settings) {
                 UIManager.launchUserSettings(context);
             } else if(item == R.id.action_calllogs) {
-                MesiboCall.getInstance().launchCallLogs(context, 0);
+                MesiboCallUi.getInstance().launchCallLogs(context, 0);
             } else if(item == R.id.mesibo_share) {
                 Intent sharingIntent = new Intent(android.content.Intent.ACTION_SEND);
                 sharingIntent.setType("text/plain");
@@ -282,11 +283,11 @@ public class MesiboListeners implements Mesibo.ConnectionListener, ILoginInterfa
 	else { // from messaging box
             if(R.id.action_call == item && 0 == params.groupid) {
                 //UIManager.launchCallActivity(MainApplication.getAppContext(), params.peer, true);
-                MesiboCall.getInstance().call(context, Mesibo.random(), params.profile, false);
+                MesiboCallUi.getInstance().call(context, params.profile.address, false);
             }
             else if(R.id.action_videocall == item && 0 == params.groupid) {
                 //UIManager.launchCallActivity(MainApplication.getAppContext(), params.peer, true);
-                MesiboCall.getInstance().call(context, Mesibo.random(), params.profile, true);
+                MesiboCallUi.getInstance().call(context, params.profile.address, true);
             }
         }
 
@@ -370,24 +371,18 @@ public class MesiboListeners implements Mesibo.ConnectionListener, ILoginInterfa
     }
 
     @Override
-    public boolean MesiboCall_onNotify(int type, Mesibo.UserProfile profile, boolean video) {
-
-        return true;
+    public MesiboCall.CallContext MesiboCallUi_OnConfig(MesiboCall.CallContext callContext) {
+        return callContext;
     }
 
     @Override
-    public MesiboVideoCallFragment MesiboCall_getVideoCallFragment(Mesibo.UserProfile userProfile) {
-        return null;
+    public boolean MesiboCallUi_OnError(MesiboCall.CallContext callContext, int i) {
+        return false;
     }
 
     @Override
-    public MesiboAudioCallFragment MesiboCall_getAudioCallFragment(Mesibo.UserProfile userProfile) {
-        return null;
-    }
-
-    @Override
-    public Fragment MesiboCall_getIncomingAudioCallFragment(Mesibo.UserProfile userProfile) {
-        return null;
+    public boolean MesiboCallUi_onNotify(int type, Mesibo.UserProfile profile, boolean video) {
+	    return false;
     }
 
     @Override

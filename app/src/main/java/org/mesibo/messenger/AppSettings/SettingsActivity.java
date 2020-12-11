@@ -106,7 +106,6 @@ public class SettingsActivity extends AppCompatActivity {
     @Override
     protected void onPause() {
         super.onPause();
-        //Mesibo.setAppInForeground(this, 0x100, false);
     }
 
     @Override

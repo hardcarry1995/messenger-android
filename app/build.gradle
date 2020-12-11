@@ -77,9 +77,7 @@ dependencies {
     implementation "com.mesibo.api:uihelper:${project.MesiboVersion_UiHelper}"
     implementation "com.mesibo.api:mesibo:${project.MesiboVersion_Api}"
     implementation "com.mesibo.api:ui:${project.MesiboVersion_Ui}"
-    implementation "com.mesibo.api:calls:${project.MesiboVersion_Calls}"
-
-
+    implementation "com.mesibo.api:callui:${project.MesiboVersion_CallUi}"
 }
 
 // this line needs to be at bottom else it gives error of version conflict

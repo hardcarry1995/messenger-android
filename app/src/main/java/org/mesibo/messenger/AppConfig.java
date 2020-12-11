@@ -41,7 +41,6 @@ package org.mesibo.messenger;
  */
 
 import com.google.gson.Gson;
-import com.mesibo.calls.MesiboCall;
 
 import android.app.backup.BackupManager;
 import android.content.Context;
