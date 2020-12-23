@@ -283,11 +283,11 @@ public class MesiboListeners implements Mesibo.ConnectionListener, ILoginInterfa
 	else { // from messaging box
             if(R.id.action_call == item && 0 == params.groupid) {
                 //UIManager.launchCallActivity(MainApplication.getAppContext(), params.peer, true);
-                MesiboCallUi.getInstance().call(context, params.profile.address, false);
+                MesiboCallUi.getInstance().callUi(context, params.profile.address, false);
             }
             else if(R.id.action_videocall == item && 0 == params.groupid) {
                 //UIManager.launchCallActivity(MainApplication.getAppContext(), params.peer, true);
-                MesiboCallUi.getInstance().call(context, params.profile.address, true);
+                MesiboCallUi.getInstance().callUi(context, params.profile.address, true);
             }
         }
 
@@ -371,12 +371,12 @@ public class MesiboListeners implements Mesibo.ConnectionListener, ILoginInterfa
     }
 
     @Override
-    public MesiboCall.CallContext MesiboCallUi_OnConfig(MesiboCall.CallContext callContext) {
-        return callContext;
+    public MesiboCall.CallProperties MesiboCallUi_OnConfig(MesiboCall.CallProperties callProperties) {
+        return callProperties;
     }
 
     @Override
-    public boolean MesiboCallUi_OnError(MesiboCall.CallContext callContext, int i) {
+    public boolean MesiboCallUi_OnError(MesiboCall.CallProperties callProperties, int i) {
         return false;
     }
 
