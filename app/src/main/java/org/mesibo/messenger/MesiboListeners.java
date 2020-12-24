@@ -283,11 +283,13 @@ public class MesiboListeners implements Mesibo.ConnectionListener, ILoginInterfa
 	else { // from messaging box
             if(R.id.action_call == item && 0 == params.groupid) {
                 //UIManager.launchCallActivity(MainApplication.getAppContext(), params.peer, true);
-                MesiboCallUi.getInstance().callUi(context, params.profile.address, false);
+                if(!MesiboCallUi.getInstance().callUi(context, params.profile.address, false))
+                    MesiboCallUi.getInstance().callUiForExistingCall(context);
             }
             else if(R.id.action_videocall == item && 0 == params.groupid) {
                 //UIManager.launchCallActivity(MainApplication.getAppContext(), params.peer, true);
-                MesiboCallUi.getInstance().callUi(context, params.profile.address, true);
+                if(!MesiboCallUi.getInstance().callUi(context, params.profile.address, true))
+                    MesiboCallUi.getInstance().callUiForExistingCall(context);
             }
         }
 
