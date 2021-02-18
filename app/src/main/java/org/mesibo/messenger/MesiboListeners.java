@@ -69,8 +69,7 @@ import com.mesibo.uihelper.ILoginResultsInterface;
 
 import java.util.ArrayList;
 
-public class MesiboListeners implements Mesibo.ConnectionListener, ILoginInterface, IProductTourListener, Mesibo.MessageListener, Mesibo.UIHelperListner, Mesibo.UserProfileLookupListener, ContactUtils.ContactsListener, Mesibo.MessageFilter, Mesibo.CrashListener, MesiboRegistrationIntentService.GCMListener,
-        MesiboCallUi.Listener {
+public class MesiboListeners implements Mesibo.ConnectionListener, ILoginInterface, IProductTourListener, Mesibo.MessageListener, Mesibo.UIHelperListner, Mesibo.UserProfileLookupListener, ContactUtils.ContactsListener, Mesibo.MessageFilter, Mesibo.CrashListener, MesiboRegistrationIntentService.GCMListener, MesiboCall.IncomingListener {
     public static final String TAG = "MesiboListeners";
     public static Context mLoginContext = null;
     private static Gson mGson = new Gson();
@@ -282,14 +281,12 @@ public class MesiboListeners implements Mesibo.ConnectionListener, ILoginInterfa
         } 
 	else { // from messaging box
             if(R.id.action_call == item && 0 == params.groupid) {
-                //UIManager.launchCallActivity(MainApplication.getAppContext(), params.peer, true);
-                if(!MesiboCallUi.getInstance().callUi(context, params.profile.address, false))
-                    MesiboCallUi.getInstance().callUiForExistingCall(context);
+                if(!MesiboCall.getInstance().callUi(context, params.profile.address, false))
+                    MesiboCall.getInstance().callUiForExistingCall(context);
             }
             else if(R.id.action_videocall == item && 0 == params.groupid) {
-                //UIManager.launchCallActivity(MainApplication.getAppContext(), params.peer, true);
-                if(!MesiboCallUi.getInstance().callUi(context, params.profile.address, true))
-                    MesiboCallUi.getInstance().callUiForExistingCall(context);
+                if(!MesiboCall.getInstance().callUi(context, params.profile.address, true))
+                    MesiboCall.getInstance().callUiForExistingCall(context);
             }
         }
 
@@ -373,19 +370,46 @@ public class MesiboListeners implements Mesibo.ConnectionListener, ILoginInterfa
     }
 
     @Override
-    public MesiboCall.CallProperties MesiboCallUi_OnConfig(MesiboCall.CallProperties callProperties) {
-        return callProperties;
+    public MesiboCall.CallProperties MesiboCall_OnIncoming(Mesibo.UserProfile userProfile, boolean video) {
+        MesiboCall.CallProperties cc = MesiboCall.getInstance().createCallProperties(video);
+        cc.parent = MainApplication.getAppContext();
+        cc.user = userProfile;
+        return cc;
     }
 
     @Override
-    public boolean MesiboCallUi_OnError(MesiboCall.CallProperties callProperties, int i) {
+    public boolean MesiboCall_OnShowUserInterface(MesiboCall.Call call, MesiboCall.CallProperties callProperties) {
         return false;
     }
 
     @Override
-    public boolean MesiboCallUi_onNotify(int type, Mesibo.UserProfile profile, boolean video) {
-	    return false;
+    public void MesiboCall_OnError(MesiboCall.CallProperties callProperties, int error) {
     }
+
+    @Override
+    public boolean MesiboCall_onNotify(int type, Mesibo.UserProfile profile, boolean video) {
+        String subject = null, message = null;
+
+        if(true)
+            return false;
+
+        if(MesiboCall.MESIBOCALL_NOTIFY_INCOMING == type) {
+
+        } else if(MesiboCall.MESIBOCALL_NOTIFY_MISSED == type) {
+            subject = "Mesibo Missed Call";
+            message = "You missed a mesibo " + (video?"video ":"") + "call from " + profile.name;
+
+        }
+
+        /* we are using id 2 as id 0 is is used by messaging and it is cleared when
+           userlist resumes (which is the case when call screen closes)
+         */
+        if(null != message)
+            SampleAPI.notify(NotifyUser.NOTIFYCALL_CHANNEL_ID, 2, subject, message);
+
+        return true;
+    }
+
 
     @Override
     public void Mesibo_onForeground(Context context, int screenId, boolean foreground) {

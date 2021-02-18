@@ -45,6 +45,7 @@ import android.content.Context;
 import android.util.Log;
 
 import com.mesibo.api.Mesibo;
+import com.mesibo.calls.api.MesiboCall;
 import com.mesibo.calls.ui.MesiboCallUi;
 import com.mesibo.mediapicker.MediaPicker;
 import com.mesibo.messaging.MesiboUI;
@@ -52,7 +53,7 @@ import com.mesibo.messaging.MesiboUI;
 public class MainApplication extends Application implements Mesibo.RestartListener {
     public static final String TAG = "MesiboSampleApplication";
     private static Context mContext = null;
-    private static MesiboCallUi mCall = null;
+    private static MesiboCallUi mCallUi = null;
     private static AppConfig mConfig = null;
 
     @Override
@@ -63,8 +64,8 @@ public class MainApplication extends Application implements Mesibo.RestartListen
         mConfig = new AppConfig(this);
         SampleAPI.init(getApplicationContext());
 
-        mCall = MesiboCallUi.getInstance();
-        mCall.init(this);
+        mCallUi = MesiboCallUi.getInstance();
+        MesiboCall.getInstance().init(mContext);
 
         MesiboUI.Config opt = MesiboUI.getConfig();
         opt.mToolbarColor = 0xff00868b;

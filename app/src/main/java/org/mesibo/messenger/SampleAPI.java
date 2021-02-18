@@ -53,6 +53,7 @@ import android.util.Base64;
 
 import com.google.gson.Gson;
 import com.mesibo.api.Mesibo;
+import com.mesibo.calls.api.MesiboCall;
 import com.mesibo.contactutils.ContactUtils;
 import com.mesibo.mediapicker.MediaPicker;
 import org.mesibo.messenger.fcm.MesiboRegistrationIntentService;
@@ -661,7 +662,7 @@ public class SampleAPI  {
 
         // add lister
         Mesibo.addListener(MesiboListeners.getInstance());
-        MesiboCallUi.getInstance().setListener(MesiboListeners.getInstance());
+        MesiboCall.getInstance().setListener(MesiboListeners.getInstance());
 
         // add file transfer handler
         MesiboFileTransferHelper fileTransferHelper = new MesiboFileTransferHelper();
@@ -952,7 +953,7 @@ public class SampleAPI  {
     public static void notify(Mesibo.MessageParams params, String message) {
         // if call is in progress, we must give notification even if reading because user is in call
         // screen
-        if(!MesiboCallUi.getInstance().isCallInProgress() && Mesibo.isReading(params))
+        if(!MesiboCall.getInstance().isCallInProgress() && Mesibo.isReading(params))
             return;
 
         if(Mesibo.ORIGIN_REALTIME != params.origin || Mesibo.MSGSTATUS_OUTBOX == params.getStatus())

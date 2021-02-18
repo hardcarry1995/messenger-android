@@ -56,6 +56,10 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity
+            android:name=".CallActivity"
+            android:theme="@style/EditProfileTheme"
+            android:windowSoftInputMode="adjustPan" />
 
 
         <meta-data android:name="com.facebook.accountkit.ApplicationName"
