@@ -214,6 +214,8 @@ public class SampleAPI  {
         public String result;
         public String op;
         public String error;
+        public String errmsg;
+        public String errtitle;
         public String token;
         public Contacts[] contacts;
         public String name;
@@ -368,8 +370,14 @@ public class SampleAPI  {
             }
 
             if(!response.result.equalsIgnoreCase("OK") ) {
-                if(response.error.equalsIgnoreCase("AUTHFAIL")) {
+                if(null != response.error && response.error.equalsIgnoreCase("AUTHFAIL")) {
                     forceLogout();
+                    return false;
+                }
+
+                if(null != response.errmsg) {
+                    if(null == response.errtitle) response.errtitle = "Failed";
+                    UIManager.showAlert(context, response.errtitle, response.errmsg);
                 }
                 return false;
             }
