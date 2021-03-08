@@ -663,7 +663,7 @@ public class SampleAPI  {
         MesiboRegistrationIntentService.startRegistration(mContext, FCM_SENDER_ID, MesiboListeners.getInstance());
 
         // set path for storing DB and messaging files
-        Mesibo.setPath(Environment.getExternalStorageDirectory().getAbsolutePath());
+        //Mesibo.setPath(Environment.getExternalStorageDirectory().getAbsolutePath());
 
         String path = Mesibo.getBasePath();
         MediaPicker.setPath(path);
