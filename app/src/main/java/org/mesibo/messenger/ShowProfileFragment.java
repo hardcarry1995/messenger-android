@@ -1,4 +1,4 @@
-/** Copyright (c) 2019 Mesibo
+/** Copyright (c) 2021 Mesibo
  * https://mesibo.com
  * All rights reserved.
  *
@@ -67,26 +67,28 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.mesibo.api.Mesibo;
-import com.mesibo.api.MesiboUtils;
+import com.mesibo.api.MesiboGroupProfile;
+import com.mesibo.api.MesiboProfile;
 import com.mesibo.emojiview.EmojiconTextView;
-import org.mesibo.messenger.Utils.AppUtils;
 
-
-import java.net.URLConnection;
 import java.util.ArrayList;
 
 import com.mesibo.mediapicker.AlbumListData;
 import com.mesibo.mediapicker.AlbumPhotosData;
 import com.mesibo.messaging.MesiboUI;
+import com.mesibo.messaging.RoundImageDrawable;
+
+import org.mesibo.messenger.Utils.AppUtils;
 
 import static android.view.View.GONE;
 import static android.view.View.VISIBLE;
+import static com.mesibo.messaging.MesiboUserListFragment.MODE_EDITGROUP;
 
 
-public class ShowProfileFragment extends Fragment implements Mesibo.MessageListener, Mesibo.UserProfileUpdateListener {
+public class ShowProfileFragment extends Fragment implements Mesibo.MessageListener, MesiboProfile.Listener, Mesibo.GroupListener {
     private static final int MAX_THUMBNAIL_GALERY_SIZE = 35;
 
-    private static Mesibo.UserProfile mUser;
+    private static MesiboProfile mUser;
     private OnFragmentInteractionListener mListener;
     private ArrayList<String> mThumbnailMediaFiles;
     private LinearLayout mGallery;
@@ -103,12 +105,14 @@ public class ShowProfileFragment extends Fragment implements Mesibo.MessageListe
     private static int IMAGE_FILE = 1;
     private static int OTHER_FILE = 2;
 
-    public int mAdminCount = 0, mAdmin = 0;
+
 
     RecyclerView mRecyclerView ;
     RecyclerView.Adapter mAdapter;
-    LinearLayout mAddMemebers;
-    ArrayList<Mesibo.UserProfile> mGroupMemberList = new ArrayList<>();
+    LinearLayout mAddMemebers, mEditGroup;
+    ArrayList<MesiboGroupProfile.Member> mGroupMemberList = new ArrayList<>();
+    MesiboGroupProfile.Member mSelfMember;
+
     ProgressDialog mProgressDialog;
 
     LinearLayout mll ;
@@ -121,19 +125,12 @@ public class ShowProfileFragment extends Fragment implements Mesibo.MessageListe
     private Mesibo.ReadDbSession mReadSession = null;
 
     public ShowProfileFragment() {
-        // Required empty public constructor
     }
 
-    /**
-     * Use this factory method to create a new instance of
-     * this fragment using the provided parameters.
-     *
-     * @return A new instance of fragment ShowProfileFragment.
-     */
-    // TODO: Rename and change types and number of parameters
-    public static ShowProfileFragment newInstance(Mesibo.UserProfile userdata) {
+    public static ShowProfileFragment newInstance(MesiboProfile userdata) {
         ShowProfileFragment fragment = new ShowProfileFragment();
         mUser = userdata;
+        mUser.addListener(fragment);
         return fragment;
     }
 
@@ -147,12 +144,9 @@ public class ShowProfileFragment extends Fragment implements Mesibo.MessageListe
     @Override
     public View onCreateView(LayoutInflater inflater, final ViewGroup container,
                              Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
         setHasOptionsMenu(true);
 
         View v =  inflater.inflate(R.layout.fragment_show_user_profile_details, container, false);
-
-
 
         mDefaultProfileBmp = BitmapFactory.decodeResource(getActivity().getResources(), R.drawable.default_user_image);
         mThumbnailMediaFiles = new ArrayList<>();
@@ -177,7 +171,6 @@ public class ShowProfileFragment extends Fragment implements Mesibo.MessageListe
         mReadSession.enableReadReceipt(true);
         mReadSession.read(100);
 
-        mProgressDialog = AppUtils.getProgressDialog(getActivity(), "Please wait...");
         mMessageBtn = (ImageView) v.findViewById (R.id.up_message_btn);
         mMessageBtn.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -188,8 +181,13 @@ public class ShowProfileFragment extends Fragment implements Mesibo.MessageListe
         mRecyclerView = (RecyclerView) v.findViewById(R.id.showprofile_memebers_rview);
 
         // change in file
-        mAddMemebers = (LinearLayout) v.findViewById(R.id.showprofile_add_memeber);
+        mAddMemebers = (LinearLayout) v.findViewById(R.id.showprofile_add_member);
         mAddMemebers.setVisibility(GONE);
+
+        mEditGroup = (LinearLayout) v.findViewById(R.id.showprofile_editgroup);
+        mEditGroup.setVisibility(GONE);
+
+
         mll = (LinearLayout) v.findViewById(R.id.up_status_card);
         mStatus = (TextView)v.findViewById(R.id.up_status_text);
         mStatusTime =(TextView) v.findViewById(R.id.up_status_update_time);
@@ -213,20 +211,8 @@ public class ShowProfileFragment extends Fragment implements Mesibo.MessageListe
             @Override
             public void onClick(View v) {
                 mProgressDialog.show();
-                SampleAPI.deleteGroup(mUser.groupid, new SampleAPI.ResponseHandler() {
-                    @Override
-                    public void HandleAPIResponse(SampleAPI.Response response) {
-                        if(null != response && response.result.equals("OK")) {
-                            if(mProgressDialog.isShowing())
-                                mProgressDialog.dismiss();
-                            Mesibo.deleteUserProfile(mUser, true, false);
-                            getActivity().finish();
-                            //UIManager.launchMesiboContacts(getActivity(), 0, 0, Intent.FLAG_ACTIVITY_CLEAR_TOP, null);
-
-                        }
-
-                    }
-                });
+                mUser.getGroupProfile().remove();
+                getActivity().finish();
             }
         });
 
@@ -236,7 +222,7 @@ public class ShowProfileFragment extends Fragment implements Mesibo.MessageListe
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 mUser.toggleMute();
-                Mesibo.setUserProfile(mUser, false);
+                mUser.save();
             }
         });
 
@@ -251,10 +237,6 @@ public class ShowProfileFragment extends Fragment implements Mesibo.MessageListe
                         if(tempdata.getmPhotoCount()==0)
                             mGalleryData.remove(tempdata);
                     }
-                    /*
-                    Intent fbIntent = new Intent(getActivity(),
-                            AlbumStartActivity.class);
-                    startActivity(fbIntent);*/
 
                     UIManager.launchAlbum(getActivity(), mGalleryData);
                 }
@@ -273,12 +255,6 @@ public class ShowProfileFragment extends Fragment implements Mesibo.MessageListe
         if (mThumbnailMediaFiles.size() < MAX_THUMBNAIL_GALERY_SIZE) {
             if (null != path) {
                 thumbnailView = getThumbnailView(fileInfo.image, (fileInfo.type == VIDEO_FILE) ? true:false);
-                /*
-                if (isImageFile(path)) {
-                    thumbnailView = getThumbnailView(fileInfo.image, false);
-                } else if (isVideoFile(path)) {
-                    thumbnailView = getThumbnailView(fileInfo.image, (fileInfo.type == 2 ? true:false));
-                }*/
                 if(null != thumbnailView) {
                     thumbnailView.setClickable(true);
                     thumbnailView.setTag(mMediaFilesCounter - 1);
@@ -286,7 +262,7 @@ public class ShowProfileFragment extends Fragment implements Mesibo.MessageListe
                         @Override
                         public void onClick(View v) {
                             int index = (int) v.getTag();
-                            String path = (String) mThumbnailMediaFiles.get(index);
+                            //String path = (String) mThumbnailMediaFiles.get(index);
                             UIManager.launchImageViewer(getActivity(), mThumbnailMediaFiles, index);
                         }
                     });
@@ -311,19 +287,6 @@ public class ShowProfileFragment extends Fragment implements Mesibo.MessageListe
         view.setLayoutParams(new ViewGroup.LayoutParams(width,width));
         return  view;
     }
-
-
-    public static boolean isImageFile(String path) {
-        String mimeType = URLConnection.guessContentTypeFromName(path);
-        return mimeType != null && mimeType.startsWith("image");
-    }
-
-
-    public static boolean isVideoFile(String path) {
-        String mimeType = URLConnection.guessContentTypeFromName(path);
-        return mimeType != null && mimeType.startsWith("video");
-    }
-
 
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
@@ -406,71 +369,83 @@ public class ShowProfileFragment extends Fragment implements Mesibo.MessageListe
         addThumbnailToGallery(fileInfo);
     }
 
-    public boolean parseGroupMembers(String members) {
-        if(TextUtils.isEmpty(members))
-            return false;
-
-        String[] s = members.split("\\:");
-        if(null == s || s.length < 2)
-            return false;
-
-        try { mAdminCount = Integer.parseInt(s[0]); } catch(NumberFormatException nfe) { return false; }
-
-        members = s[1];
-        String[] users = members.split("\\,");
-        if(null == users)
-            return false;
+    public boolean parseGroupMembers(MesiboGroupProfile.Member[] users) {
 
         String phone = SampleAPI.getPhone();
-        //MUST not happen
         if(TextUtils.isEmpty(phone))
             return false;
 
         mGroupMemberList.clear();
-        //only owner can delete group
-        mExitGroupText.setText(phone.equalsIgnoreCase(users[0]) ? "Delete Group" : "Exit Group");
-
-        mAdmin = 0;
-
-        ArrayList<Mesibo.UserProfile> unknownProfiles = new ArrayList<Mesibo.UserProfile>();
 
         for(int i=0; i < users.length; i++) {
-            Mesibo.UserProfile up = null;
-            String peer = users[i];
+            String peer = users[i].getAddress();
             if(phone.equalsIgnoreCase(peer)) {
-                up = Mesibo.getSelfProfile();
-                if(i < mAdminCount)
-                    mAdmin = 1;
+                mSelfMember = users[i];
             }
 
-            if(null == up)
-                up = Mesibo.getUserProfile(peer, 0);
-
-            if(null == up) {
-
-                // we can do this instead but the problem is all unknown people will be shown in
-                // contact list
-                up = Mesibo.createUserProfile(peer, 0, peer);
-
-            }
-
-            if((up.flag& Mesibo.UserProfile.FLAG_TEMPORARY) > 0)
-                unknownProfiles.add(up);
-
-            mGroupMemberList.add(up);
+            mGroupMemberList.add(users[i]);
         }
 
-        if(unknownProfiles.size() > 0) {
-            SampleAPI.addContacts(unknownProfiles, true);
+        //only owner can delete group
+        mExitGroupText.setText(mSelfMember.isOwner() ? "Delete Group" : "Exit Group");
+
+        if(mUser.groupid > 0) {
+            mAddMemebers.setVisibility(mSelfMember.isAdmin() ? VISIBLE : GONE);
+            mEditGroup.setVisibility(mUser.getGroupProfile().canModify() ? VISIBLE : GONE);
         }
 
-        mAddMemebers.setVisibility(mAdmin != 0 ? VISIBLE : GONE);
         mAdapter.notifyDataSetChanged();
         return true;
     }
 
+    public void updateMember(MesiboGroupProfile.Member m) {
+        for(int i=0; i < mGroupMemberList.size(); i++) {
+            MesiboGroupProfile.Member em = mGroupMemberList.get(i);
+            if(em.getAddress().equalsIgnoreCase(m.getAddress())) {
+                mGroupMemberList.remove(em);
+                mGroupMemberList.add(i, m);
+                break;
+            }
+        }
+    }
+
     @Override
-    public void Mesibo_onUserProfileUpdated(Mesibo.UserProfile userProfile, int i, boolean b) {
+    public void Mesibo_onGroupCreated(MesiboProfile mesiboProfile) {
+
+    }
+
+    @Override
+    public void Mesibo_onGroupJoined(MesiboProfile mesiboProfile) {
+
+    }
+
+    @Override
+    public void Mesibo_onGroupLeft(MesiboProfile mesiboProfile) {
+
+    }
+
+    @Override
+    public void Mesibo_onGroupMembers(MesiboProfile mesiboProfile, MesiboGroupProfile.Member[] members) {
+        parseGroupMembers(members);
+    }
+
+    @Override
+    public void Mesibo_onGroupMembersJoined(MesiboProfile mesiboProfile, MesiboGroupProfile.Member[] members) {
+        if(null == members) return;
+
+        for(MesiboGroupProfile.Member m : members) {
+            updateMember(m);
+        }
+        mAdapter.notifyDataSetChanged();
+    }
+
+    @Override
+    public void Mesibo_onGroupMembersRemoved(MesiboProfile mesiboProfile, MesiboGroupProfile.Member[] members) {
+
+    }
+
+    @Override
+    public void MesiboProfile_onUpdate(MesiboProfile userProfile) {
         if(null != mAdapter)
             mAdapter.notifyDataSetChanged();
     }
@@ -478,7 +453,7 @@ public class ShowProfileFragment extends Fragment implements Mesibo.MessageListe
     @Override
     public void onResume  () {
         super.onResume();
-        if(mUser.groupid > 0 && 0 == (mUser.flag& Mesibo.UserProfile.FLAG_DELETED)){
+        if(mUser.groupid > 0 && !mUser.isDeleted()){
             mExitGroupCard.setVisibility(VISIBLE);
             mGroupMemebersCard.setVisibility(VISIBLE);
             mStatusPhoneCard.setVisibility(GONE);
@@ -488,45 +463,35 @@ public class ShowProfileFragment extends Fragment implements Mesibo.MessageListe
 
                     Bundle bundle = new Bundle();
                     bundle.putLong("groupid", mUser.groupid);
-                    UIManager.launchMesiboContacts(getActivity(), 0, 4, 0,bundle);
+                    UIManager.launchMesiboContacts(getActivity(), 0, MODE_EDITGROUP, 0,bundle);
                     getActivity().finish();
                 }
             });
 
-            if(TextUtils.isEmpty(mUser.groupMembers)) {
-                mProgressDialog.show();
-                SampleAPI.getGroup(mUser.groupid, new SampleAPI.ResponseHandler() {
-                    @Override
-                    public void HandleAPIResponse(SampleAPI.Response response) {
+            mEditGroup.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    UIManager.launchEditProfile(getActivity(), 0, mUser.groupid, false);
+                    //UIManager.launchMesiboContacts(getActivity(), 0, MODE_EDITGROUP, 0,bundle);
+                    getActivity().finish();
+                }
+            });
 
-                        if (mProgressDialog.isShowing())
-                            mProgressDialog.dismiss();
 
-                        if (null == response || !response.result.equals("OK")) {
-                            mGroupMemebersCard.setVisibility(GONE);
-                            mExitGroupText.setVisibility(GONE);
-                            return;
-                        }
-
-                        parseGroupMembers(response.members);
-                    }
-                });
-            } else
-                parseGroupMembers(mUser.groupMembers);
+            mUser.getGroupProfile().getMembers(100, true, this);
 
         } else {
             mExitGroupCard.setVisibility(GONE);
             mGroupMemebersCard.setVisibility(GONE);
             mStatusPhoneCard.setVisibility(VISIBLE);
 
-            if(null == mUser.status) {
+            if(TextUtils.isEmpty(mUser.getStatus())) {
                 mll.setVisibility(GONE);
             } else {
                 mll.setVisibility(VISIBLE);
-                mStatus.setText((mUser.status));
+                mStatus.setText(mUser.getStatus());
             }
 
-            //statusTime.setText((mUserProfiledata.lastActive));
             mStatusTime.setText((""));
             mMobileNumber.setText((mUser.address));
             mPhoneType.setText("Mobile");
@@ -534,27 +499,17 @@ public class ShowProfileFragment extends Fragment implements Mesibo.MessageListe
 
     }
 
-    /**
-     * This interface must be implemented by activities that contain this
-     * fragment to allow an interaction in this fragment to be communicated
-     * to the activity and potentially other fragments contained in that
-     * activity.
-     * <p>
-     * See the Android Training lesson <a href=
-     * "http://developer.android.com/training/basics/fragments/communicating.html"
-     * >Communicating with Other Fragments</a> for more information.
-     */
+
     public interface OnFragmentInteractionListener {
-        // TODO: Update argument type and name
         void onFragmentInteraction(Uri uri);
     }
 
     public class GroupMemeberAdapter
             extends RecyclerView.Adapter<RecyclerView.ViewHolder>{
         private Context mContext=null;
-        private ArrayList<Mesibo.UserProfile> mDataList=null;
+        private ArrayList<MesiboGroupProfile.Member> mDataList=null;
 
-        public GroupMemeberAdapter(Context context,ArrayList<Mesibo.UserProfile> list) {
+        public GroupMemeberAdapter(Context context,ArrayList<MesiboGroupProfile.Member> list) {
             this.mContext = context;
             mDataList = list;
         }
@@ -590,43 +545,40 @@ public class ShowProfileFragment extends Fragment implements Mesibo.MessageListe
         @Override
         public void onBindViewHolder(RecyclerView.ViewHolder holderr, final int position) {
             final int pos = position;
-            final Mesibo.UserProfile user = mDataList.get(position);
+            final MesiboGroupProfile.Member member = mDataList.get(position);
+            final MesiboProfile user = member.getProfile();
             final GroupMembersCellsViewHolder holder = (GroupMembersCellsViewHolder) holderr;
 
 
 
-            if(!TextUtils.isEmpty(user.name))
-                holder.mContactsName.setText(user.name);
-            else
-                holder.mContactsName.setText("");
-            final Bitmap b = null;
-            String filePath = Mesibo.getUserProfilePicturePath(user, Mesibo.FileInfo.TYPE_AUTO);
+            holder.mContactsName.setText(user.getNameOrAddress("+"));
 
-            Bitmap memberImage = BitmapFactory.decodeFile(filePath);
+            Bitmap memberImage = user.getImage();
             if(null != memberImage)
-                holder.mContactsProfile.setImageDrawable(MesiboUtils.getRoundImageDrawable(memberImage));
+                holder.mContactsProfile.setImageDrawable(new RoundImageDrawable(memberImage));
             else
-                holder.mContactsProfile.setImageDrawable(MesiboUtils.getRoundImageDrawable(mDefaultProfileBmp));
+                holder.mContactsProfile.setImageDrawable(new RoundImageDrawable(mDefaultProfileBmp));
 
-            if (position < mAdminCount) {
+            if (member.isAdmin()) {
                 holder.mAdminTextView.setVisibility(VISIBLE);
             }else {
                 holder.mAdminTextView.setVisibility(GONE);
             }
 
-            if(TextUtils.isEmpty(user.status)) {
-                user.status = "";
+            if(TextUtils.isEmpty(user.getStatus())) {
+                user.setStatus("");
             }
-            holder.mContactsStatus.setText(user.status);
+            holder.mContactsStatus.setText(user.getStatus());
 
             // only admin can have menu, also owner can't be deleted
 
                 holder.mView.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View view) {
-                        final Mesibo.UserProfile profile = mDataList.get(position);
+                        final MesiboGroupProfile.Member member = mDataList.get(position);
+                        final MesiboProfile profile = member.getProfile();
 
-                        if(0 == mAdmin  || 0 == position) {
+                        if(!mSelfMember.isAdmin()) {
                             if(profile.isSelfProfile()) {
                                 return;
                             }
@@ -638,13 +590,11 @@ public class ShowProfileFragment extends Fragment implements Mesibo.MessageListe
 
                         ArrayList<String> items = new ArrayList<String>();
 
-                        final boolean makeAdmin;
-                        if(position >= mAdminCount) {
+                        if(!member.isAdmin()) {
                             items.add("Make Admin");
-                            makeAdmin = true;
+
                         } else {
                             items.add("Remove Admin");
-                            makeAdmin = false;
                         }
 
                         // don't allow self messaging or self delete member
@@ -663,48 +613,16 @@ public class ShowProfileFragment extends Fragment implements Mesibo.MessageListe
                                 //Delete member
                                 if (item == 1) {
                                     String[] members = new String[1];
-                                    members[0] = mDataList.get(position).address;
-                                    mProgressDialog.show();
-                                    SampleAPI.editMembers(mUser.groupid, members, true, new SampleAPI.ResponseHandler() {
-                                        @Override
-                                        public void HandleAPIResponse(SampleAPI.Response response) {
-                                            if (mProgressDialog.isShowing())
-                                                mProgressDialog.dismiss();
-
-                                            if(null == response) {
-                                                //TBD, show error
-                                                return;
-                                            }
-
-                                            if (response.result.equals("OK")) {
-                                                mDataList.remove(position);
-                                                notifyItemRemoved(position);
-                                                notifyDataSetChanged();
-                                            }
-
-                                        }
-                                    });
+                                    members[0] = mDataList.get(position).getAddress();
+                                    mUser.getGroupProfile().removeMembers(members);
+                                    mDataList.remove(position);
+                                    notifyItemRemoved(position);
+                                    notifyDataSetChanged();
 
                                 } else if(item == 0 ) {
-                                    mProgressDialog.show();
-                                    SampleAPI.setAdmin(mUser.groupid, mDataList.get(position).address, makeAdmin, new SampleAPI.ResponseHandler() {
-                                        @Override
-                                        public void HandleAPIResponse(SampleAPI.Response response) {
-                                            if (mProgressDialog.isShowing())
-                                                mProgressDialog.dismiss();
-
-                                            if(null == response) {
-                                                //TBD, show error
-                                                return;
-                                            }
-
-                                            if (response.result.equals("OK")) {
-                                                parseGroupMembers(mUser.groupMembers);
-                                            }
-
-                                        }
-                                    });
-
+                                    String[] members = new String[1];
+                                    members[0] = mDataList.get(position).getAddress();
+                                    mUser.getGroupProfile().addMembers(members , MesiboGroupProfile.MEMBERFLAG_ALL, member.isAdmin()?0:MesiboGroupProfile.ADMINFLAG_ALL);
                                 } else  if( 2 == item) {
                                     MesiboUI.launchMessageView(getActivity(), profile.address, profile.groupid);
                                     getActivity().finish();

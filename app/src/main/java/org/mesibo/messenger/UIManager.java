@@ -1,4 +1,4 @@
-/** Copyright (c) 2019 Mesibo
+/** Copyright (c) 2021 Mesibo
  * https://mesibo.com
  * All rights reserved.
  *
@@ -62,6 +62,7 @@ import com.mesibo.uihelper.ILoginInterface;
 import com.mesibo.uihelper.IProductTourListener;
 import com.mesibo.uihelper.MesiboUiHelper;
 import com.mesibo.uihelper.MesiboUiHelperConfig;
+import com.mesibo.uihelper.OtpView;
 import com.mesibo.uihelper.WelcomeScreen;
 import com.mesibo.messaging.MesiboUI;
 
@@ -103,10 +104,13 @@ public class UIManager {
         context.startActivity(intent);
     }
 
-    public static void launchUserRegistration(Context context, int flag) {
+    public static void launchEditProfile(Context context, int flag, long groupid, boolean launchMesibo) {
         Intent subActivity = new Intent(context, EditProfileActivity.class);
         if(flag > 0)
             subActivity.setFlags(flag);
+        subActivity.putExtra("groupid", groupid);
+        subActivity.putExtra("launchMesibo", launchMesibo);
+
         context.startActivity(subActivity);
     }
 
@@ -126,20 +130,14 @@ public class UIManager {
     }
 
     public static boolean mProductTourShown = false;
-    public static void launchWelcomeactivity(Activity context, boolean newtask, ILoginInterface loginInterface, IProductTourListener tourListener){
-
-
-
+    public static void initUiHelper() {
         MesiboUiHelperConfig config = new MesiboUiHelperConfig();
 
         List<WelcomeScreen> res = new ArrayList<WelcomeScreen>();
 
-        res.add(new WelcomeScreen("Messaging in your apps", "Over 79% of all apps require some form of communications. Mesibo is built from ground-up to power this!", 0, R.drawable.welcome, 0xff00868b));
+        res.add(new WelcomeScreen("Messaging, & Calls in your apps", "Add messaging, Video and Voice calls & conferencing in your apps in no time. Mesibo is built from ground-up to power this!", 0, R.drawable.welcome, 0xff00868b));
         res.add(new WelcomeScreen("Messaging, Voice, & Video", "Complete infrastructure with powerful APIs to get you started, rightaway!", 0, R.drawable.videocall, 0xff0f9d58));
-        //res.add(new WelcomeScreen("Plug & Play", "Not just APIs, you can even use pluggable UI modules - Buid in just a few hours", 0, R.drawable.profile, 0xfff4b400));
-        res.add(new WelcomeScreen("Open Source", "Quickly integrate Mesibo in your own app using freely available source code", 0, R.drawable.opensource_ios, 0xff054a61));
-
-        //res.add(new WelcomeScreen("No Sweat Pricing", "Start free & only pay as you grow!", 0, R.drawable.users, 0xff0f9d58));
+        res.add(new WelcomeScreen("Open Source", "Quickly integrate mesibo in your own app using freely available source code", 0, R.drawable.opensource_ios, 0xff054a61));
 
         // dummy - requires
         res.add(new WelcomeScreen("", ":", 0, R.drawable.welcome, 0xff00868b));
@@ -147,7 +145,8 @@ public class UIManager {
 
         config.mScreens = res;
         config.mWelcomeBottomText = "Mesibo will never share your information";
-        config.mWelcomeBackgroundColor = 0xff00868b;
+
+        config.mWelcomeBackgroundColor = 0xff00868b; //TBD, not required, take from welcomescren[0]
 
         config.mBackgroundColor = 0xffffffff;
         config.mPrimaryTextColor = 0xff172727;
@@ -156,19 +155,30 @@ public class UIManager {
         config.mSecondaryTextColor = 0xff666666;
 
         config.mScreenAnimation = true;
-        config.mSmartLockUrl = "https://app.mesibo.com";
+        config.mSmartLockUrl = null; //"https://mesibo.com/sampleapp/";
 
         List<String> permissions = new ArrayList<>();
 
         permissions.add(Manifest.permission.WRITE_EXTERNAL_STORAGE);
         permissions.add(Manifest.permission.READ_CONTACTS);
         config.mPermissions = permissions;
-        config.mPermissionsRequestMessage = "Mesibo requires Storage and Contacts permissions so that you can send messages and make calls to your contacts. Please grant to continue!";
-        config.mPermissionsDeniedMessage = "Mesibo will close now since the required permissions were not granted";
+        config.mPermissionsRequestMessage = "mesibo requires Storage and Contacts permissions so that you can send messages and make calls to your contacts. Please grant to continue!";
+        config.mPermissionsDeniedMessage = "mesibo will close now since the required permissions were not granted";
 
+        //config.mPhoneVerificationText = "Get OTP from your mesibo console (In App settings), login https://mesibo.com/console";
+        config.mPhoneVerificationBottomText = "IMPORTANT: We will NOT send OTP.  Instead, you can generate OTP for any number from the mesibo console. Sign up at https://mesibo.com/console";
+        config.mLoginBottomDescColor = 0xAAFF0000;
 
         MesiboUiHelper.setConfig(config);
+    }
 
+    public static void launchWelcomeactivity(Activity context, boolean newtask, ILoginInterface loginInterface, IProductTourListener tourListener){
+
+        initUiHelper();
+
+
+        // if mesibo was lauched in this session, we came here after logout, so
+        // no need to show tour
         if(mMesiboLaunched) {
             launchLogin(context, MesiboListeners.getInstance());
             return;
@@ -179,6 +189,7 @@ public class UIManager {
     }
 
     public static void launchLogin(Activity context, ILoginInterface loginInterface){
+        initUiHelper();
         MesiboUiHelper.launchLogin(context, true, 2, loginInterface);
     }
 
@@ -189,7 +200,6 @@ public class UIManager {
         android.support.v7.app.AlertDialog.Builder dialog = new android.support.v7.app.AlertDialog.Builder(context);
         dialog.setTitle(title);
         dialog.setMessage(message);
-        // dialog.setIcon(android.R.drawable.ic_dialog_alert);
         dialog.setCancelable(true);
 
         dialog.setPositiveButton(android.R.string.ok, pl);
@@ -198,11 +208,11 @@ public class UIManager {
         try {
             dialog.show();
         } catch (Exception e) {
-
         }
     }
 
     public static void showAlert(Context context, String title, String message) {
         showAlert(context, title, message, null, null);
     }
+
 }

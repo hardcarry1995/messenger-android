@@ -1,4 +1,4 @@
-/** Copyright (c) 2019 Mesibo
+/** Copyright (c) 2021 Mesibo
  * https://mesibo.com
  * All rights reserved.
  *
@@ -42,9 +42,9 @@ package org.mesibo.messenger;
 
 
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Build;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.support.design.widget.AppBarLayout;
@@ -53,7 +53,6 @@ import android.support.design.widget.CoordinatorLayout;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.View;
@@ -61,22 +60,24 @@ import android.view.animation.AlphaAnimation;
 import android.widget.TextView;
 
 import com.mesibo.api.Mesibo;
+import com.mesibo.api.MesiboProfile;
 
-public class ShowProfileActivity extends AppCompatActivity implements ShowProfileFragment.OnFragmentInteractionListener, Mesibo.FileTransferListener, Mesibo.UserProfileUpdateListener {
+public class ShowProfileActivity extends AppCompatActivity implements ShowProfileFragment.OnFragmentInteractionListener, Mesibo.FileTransferListener, MesiboProfile.Listener {
 
     SquareImageView mUsermageView;
-    Mesibo.UserProfile mUserProfile;
+    MesiboProfile mUserProfile;
     Toolbar mToolbar;
     AppBarLayout mAppBarLayout;
     CoordinatorLayout mCoordinatorLayout;
+
     long mGroupId = 0;
     String mPeer = null;
-    private String mProfilePicturePath = null;
-
+   
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_show_user_profile);
+
         mToolbar = (Toolbar) findViewById(R.id.up_toolbar);
         setSupportActionBar(mToolbar);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
@@ -92,10 +93,13 @@ public class ShowProfileActivity extends AppCompatActivity implements ShowProfil
         mUserProfile = null;
 
         if (mGroupId > 0) {
-            mUserProfile = Mesibo.getUserProfile(mGroupId);
+            mUserProfile = Mesibo.getProfile(mGroupId);
         } else {
-            mUserProfile = Mesibo.getUserProfile(mPeer);
+            mUserProfile = Mesibo.getProfile(mPeer);
         }
+
+        mUserProfile.addListener(this);
+
         mUsermageView = (SquareImageView) findViewById(R.id.up_image_profile);
 
         Mesibo.addListener(this);
@@ -103,7 +107,7 @@ public class ShowProfileActivity extends AppCompatActivity implements ShowProfil
         mUsermageView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                UIManager.launchImageViewer(ShowProfileActivity.this, mProfilePicturePath);
+                UIManager.launchImageViewer(ShowProfileActivity.this, mUserProfile.getImageOrThumbnailPath());
             }
 
         });
@@ -111,7 +115,7 @@ public class ShowProfileActivity extends AppCompatActivity implements ShowProfil
         TextView userName = (TextView) findViewById(R.id.up_user_name);
         TextView userstatus = (TextView) findViewById(R.id.up_current_status);
 
-        userName.setText(mUserProfile.name);
+        userName.setText(mUserProfile.getName());
         long lastSeen = Mesibo.getTimestamp() - mUserProfile.lastActiveTime;
         userstatus.setVisibility(View.VISIBLE);
         if(lastSeen <= 60000) {
@@ -143,10 +147,10 @@ public class ShowProfileActivity extends AppCompatActivity implements ShowProfil
         }
 
         CollapsingToolbarLayout collapsingToolbar =
-                findViewById(R.id.up_collapsing_toolbar);
+                (CollapsingToolbarLayout) findViewById(R.id.up_collapsing_toolbar);
         collapsingToolbar.setTitle("  ");
-        mCoordinatorLayout = findViewById(R.id.up_profile_root);
-        mAppBarLayout = findViewById(R.id.up_appbar);
+        mCoordinatorLayout = (CoordinatorLayout) findViewById(R.id.up_profile_root);
+        mAppBarLayout = (AppBarLayout) findViewById(R.id.up_appbar);
         mAppBarLayout.post(new Runnable() {
             @Override
             public void run() {
@@ -183,6 +187,7 @@ public class ShowProfileActivity extends AppCompatActivity implements ShowProfil
         ShowProfileFragment showUserProfileDetailsFragment = ShowProfileFragment.newInstance(mUserProfile);
         fragmentTransaction.add(R.id.up_fragment, showUserProfileDetailsFragment, "up");
         fragmentTransaction.commit();
+
     }
 
     private void setAppBarOffset(int offsetPx) {
@@ -193,27 +198,17 @@ public class ShowProfileActivity extends AppCompatActivity implements ShowProfil
     }
 
     private void setUserPicture() {
-        mProfilePicturePath = Mesibo.getUserProfilePicturePath(mUserProfile, Mesibo.FileInfo.TYPE_AUTO);
-        if(null == mProfilePicturePath || !Mesibo.fileExists(mProfilePicturePath))
-            return;
-
-        Bitmap b = BitmapFactory.decodeFile(mProfilePicturePath);
+        Bitmap b = mUserProfile.getImageOrThumbnail();
         if(null != b) {
             mUsermageView.setImageBitmap(b);
         }
     }
 
     @Override
-    public void Mesibo_onUserProfileUpdated(Mesibo.UserProfile userProfile, int i, boolean refresh) {
-        if(!refresh)
-            return;
-
-        if(userProfile != mUserProfile)
-            return;
+    public void MesiboProfile_onUpdate(MesiboProfile userProfile) {
 
         if(Mesibo.isUiThread()) {
             setUserPicture();
-            Mesibo.startUserProfilePictureTransfer(mUserProfile, this);
             return;
         }
 
@@ -221,7 +216,6 @@ public class ShowProfileActivity extends AppCompatActivity implements ShowProfil
             @Override
             public void run() {
                 setUserPicture();
-                Mesibo.startUserProfilePictureTransfer(mUserProfile, ShowProfileActivity.this);
             }
         });
 
@@ -229,9 +223,6 @@ public class ShowProfileActivity extends AppCompatActivity implements ShowProfil
 
     }
 
-    /**
-     * @param file
-     */
     @Override
     public boolean Mesibo_onFileTransferProgress(Mesibo.FileInfo file) {
 
@@ -263,13 +254,11 @@ public class ShowProfileActivity extends AppCompatActivity implements ShowProfil
 
         if(mUserProfile.groupid > 0) {
             TextView userName = (TextView) findViewById(R.id.up_user_name);
-            if(null != mUserProfile.name)
-                userName.setText(mUserProfile.name);
+            if(null != mUserProfile.getName())
+                userName.setText(mUserProfile.getName());
         }
 
         setUserPicture();
-        Mesibo.startUserProfilePictureTransfer(mUserProfile, this);
-
     }
 
     @Override
@@ -291,15 +280,4 @@ public class ShowProfileActivity extends AppCompatActivity implements ShowProfil
         overridePendingTransition(0, 0);
     }
 
-
-
-    @Override
-    public void onStart() {
-        super.onStart();
-    }
-
-    @Override
-    public void onStop() {
-        super.onStop();
-    }
 }

@@ -40,8 +40,10 @@
 package org.mesibo.messenger.AppSettings;
 
 
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
@@ -56,11 +58,13 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 
 import com.mesibo.api.Mesibo;
-import com.mesibo.api.MesiboUtils;
+import com.mesibo.api.MesiboProfile;
 import com.mesibo.emojiview.EmojiconTextView;
+import com.mesibo.messaging.RoundImageDrawable;
+
 import org.mesibo.messenger.EditProfileFragment;
-import org.mesibo.messenger.SampleAPI;
 import org.mesibo.messenger.R;
+import org.mesibo.messenger.SampleAPI;
 
 
 public class BasicSettingsFragment extends Fragment {
@@ -69,7 +73,7 @@ public class BasicSettingsFragment extends Fragment {
     private EmojiconTextView mUserName;
     private EmojiconTextView mUserStatus;
     private ImageView mUserImage;
-    private Mesibo.UserProfile mUser = Mesibo.getSelfProfile();
+    private MesiboProfile mUser = Mesibo.getSelfProfile();
 
     public BasicSettingsFragment() {
         // Required empty public constructor
@@ -155,31 +159,22 @@ public class BasicSettingsFragment extends Fragment {
         return  v;
     }
 
-    /**
-     * Called when the fragment is visible to the user and actively running.
-     * This is generally
-     * tied to {@link Activity#onResume() Activity.onResume} of the containing
-     * Activity's lifecycle.
-     */
+
     @Override
     public void onResume() {
         super.onResume();
         mUser = Mesibo.getSelfProfile();
-        String imagePath = Mesibo.getUserProfilePicturePath(mUser, Mesibo.FileInfo.TYPE_AUTO);
+        String imagePath = mUser.getImagePath();
         if(null != imagePath) {
             Bitmap b = BitmapFactory.decodeFile(imagePath);
             if(null != b)
-                mUserImage.setImageDrawable(MesiboUtils.getRoundImageDrawable(b));
+                mUserImage.setImageDrawable(new RoundImageDrawable(b));
         }
 
-        if(!TextUtils.isEmpty(mUser.name)) {
-            mUserName.setText(mUser.name);
-        }else {
-            mUserName.setText("");
-        }
+        mUserName.setText(mUser.getName());
 
-        if(!TextUtils.isEmpty(mUser.status)) {
-            mUserStatus.setText(mUser.status);
+        if(!TextUtils.isEmpty(mUser.getStatus())) {
+            mUserStatus.setText(mUser.getStatus());
         }else {
             mUserStatus.setText("");
         }

@@ -387,18 +387,19 @@
 
                     </LinearLayout>
 
-
                     <LinearLayout
-                        android:id="@+id/showprofile_add_memeber"
+                        android:id="@+id/showprofile_editgroup"
                         android:orientation="horizontal"
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content">
-
+                        android:layout_height="wrap_content"
+                        android:paddingTop="6dp"
+                        android:paddingBottom="6dp"
+                        >
 
                         <ImageView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:src="@drawable/ic_group_add_black_36dp"
+                            android:src="@drawable/ic_group_black"
                             android:tint="@color/md_grey_500"
                             android:layout_margin="5dp"
                             />
@@ -406,20 +407,45 @@
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="Edit members and group details"
+                            android:text="Edit Group Details"
                             android:layout_gravity="center_vertical"
                             android:textSize="18sp"
                             android:gravity="left|center_vertical"
                             android:layout_weight="1"
                             android:layout_marginLeft="20dp"
+                            />
+                    </LinearLayout>
 
+                    <LinearLayout
+                        android:id="@+id/showprofile_add_member"
+                        android:orientation="horizontal"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:paddingTop="6dp"
+                        android:paddingBottom="6dp"
+                        >
 
-
+                        <ImageView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:src="@drawable/ic_group_add_black_24dp"
+                            android:tint="@color/md_grey_500"
+                            android:layout_margin="5dp"
                             />
 
-
-
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="Add Group members"
+                            android:layout_gravity="center_vertical"
+                            android:textSize="18sp"
+                            android:gravity="left|center_vertical"
+                            android:layout_weight="1"
+                            android:layout_marginLeft="20dp"
+                            />
                     </LinearLayout>
+
+
                     <View
                         android:layout_width="match_parent"
                         android:layout_height="0.5dp"

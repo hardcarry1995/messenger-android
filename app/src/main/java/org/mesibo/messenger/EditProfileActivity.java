@@ -1,4 +1,4 @@
-/** Copyright (c) 2019 Mesibo
+/** Copyright (c) 2021 Mesibo
  * https://mesibo.com
  * All rights reserved.
  *
@@ -56,15 +56,23 @@ import com.mesibo.api.Mesibo;
 
 public class EditProfileActivity extends AppCompatActivity {
 
-
     Fragment mRequestingFragment;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_register_new_profile);
 
+        Bundle args = getIntent().getExtras();
+        if (null == args) {
+            return;
+        }
+
+        long groupid = args.getLong("groupid", 0);
+        boolean launchMesibo = args.getBoolean("launchMesibo", false);
 
         EditProfileFragment registerNewProfileFragment = new EditProfileFragment();
+        registerNewProfileFragment.setGroupId(groupid);
+        registerNewProfileFragment.setLaunchMesibo(launchMesibo);
         mRequestingFragment = registerNewProfileFragment;
         FragmentManager fm = getSupportFragmentManager();
         FragmentTransaction ft = fm.beginTransaction();

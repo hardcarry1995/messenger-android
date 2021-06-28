@@ -127,11 +127,6 @@ public class DataUsageFragment extends PreferenceFragmentCompat implements Share
                         .unregisterOnSharedPreferenceChangeListener(this);
         }
 
-        @Override
-        public void onDestroy() {
-                super.onDestroy();
-                //unregister event bus.
-        }
 
 
         public void displaySwitches() {

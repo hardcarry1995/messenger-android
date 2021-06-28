@@ -1,4 +1,4 @@
-/** Copyright (c) 2019 Mesibo
+/** Copyright (c) 2021 Mesibo
  * https://mesibo.com
  * All rights reserved.
  *
@@ -39,26 +39,28 @@
  */
 package org.mesibo.messenger.Utils;
 
+import android.app.AlarmManager;
+import android.app.PendingIntent;
 import android.app.ProgressDialog;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.os.Environment;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
 public class AppUtils {
 
-    public static ProgressDialog getProgressDialog(Context c, String message) {
-        //ProgressDialog progressDialog = ProgressDialog.show(c, "", "Loading..");
-        //progressDialog.dismiss();
-
-        final ProgressDialog progressDialog = new ProgressDialog(c);
-        progressDialog.setIndeterminate(true);
-        progressDialog.setMessage(message);
-        return progressDialog;
-    }
 
     public static boolean aquireUserPermission(Context context, final String permission, int REQUEST_CODE) {
         if (ContextCompat.checkSelfPermission(context, permission)

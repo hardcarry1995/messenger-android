@@ -41,17 +41,19 @@
 package org.mesibo.messenger;
 
 import android.app.Application;
+import android.arch.lifecycle.LifecycleObserver;
 import android.content.Context;
 import android.util.Log;
 
 import com.mesibo.api.Mesibo;
 import com.mesibo.calls.api.MesiboCall;
-import com.mesibo.calls.ui.MesiboCallUi;
+import com.mesibo.mediapicker.ImagePicker;
 import com.mesibo.mediapicker.MediaPicker;
+import com.mesibo.calls.ui.MesiboCallUi;
 import com.mesibo.messaging.MesiboUI;
 
-public class MainApplication extends Application implements Mesibo.RestartListener {
-    public static final String TAG = "MesiboSampleApplication";
+public class MainApplication extends Application implements Mesibo.RestartListener, LifecycleObserver {
+    public static final String TAG = "MesiboDemoApplication";
     private static Context mContext = null;
     private static MesiboCallUi mCallUi = null;
     private static AppConfig mConfig = null;
@@ -69,10 +71,9 @@ public class MainApplication extends Application implements Mesibo.RestartListen
 
         MesiboUI.Config opt = MesiboUI.getConfig();
         opt.mToolbarColor = 0xff00868b;
-        opt.emptyUserListMessage = "Ask your family and friends to download so that you can try out Mesibo functionalities";
+        opt.emptyUserListMessage = "No messages! Click on the message icon above to start messaging!";
         MediaPicker.setToolbarColor(opt.mToolbarColor);
-
-
+        ImagePicker.getInstance().setApp(this);
 
     }
 

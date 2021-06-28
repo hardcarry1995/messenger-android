@@ -46,7 +46,6 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
-import android.support.v4.app.Fragment;
 import android.support.v4.view.MenuItemCompat;
 import android.text.TextUtils;
 import android.util.Log;
@@ -56,6 +55,8 @@ import android.view.View;
 
 import com.google.gson.Gson;
 
+import com.mesibo.api.MesiboGroupProfile;
+import com.mesibo.api.MesiboProfile;
 import com.mesibo.calls.api.MesiboCall;
 import com.mesibo.calls.ui.MesiboCallUi;
 import com.mesibo.contactutils.*;
@@ -68,8 +69,9 @@ import com.mesibo.uihelper.IProductTourListener;
 import com.mesibo.uihelper.ILoginResultsInterface;
 
 import java.util.ArrayList;
+import static org.webrtc.ContextUtils.getApplicationContext;
 
-public class MesiboListeners implements Mesibo.ConnectionListener, ILoginInterface, IProductTourListener, Mesibo.MessageListener, Mesibo.UIHelperListner, Mesibo.UserProfileLookupListener, ContactUtils.ContactsListener, Mesibo.MessageFilter, Mesibo.CrashListener, MesiboRegistrationIntentService.GCMListener, MesiboCall.IncomingListener {
+public class MesiboListeners implements Mesibo.ConnectionListener, ILoginInterface, IProductTourListener, Mesibo.MessageListener, Mesibo.UIHelperListner, ContactUtils.ContactsListener, Mesibo.MessageFilter, Mesibo.ProfileListener, Mesibo.CrashListener, MesiboRegistrationIntentService.GCMListener, MesiboCall.IncomingListener, Mesibo.GroupListener {
     public static final String TAG = "MesiboListeners";
     public static Context mLoginContext = null;
     private static Gson mGson = new Gson();
@@ -95,6 +97,7 @@ public class MesiboListeners implements Mesibo.ConnectionListener, ILoginInterfa
     Handler mGroupHandler = null;
     String mCode = null;
     String mPhone = null;
+    boolean mSyncDone = false;
 
     @SuppressWarnings("all")
     private SampleAPI.ResponseHandler mHandler = new SampleAPI.ResponseHandler() {
@@ -106,16 +109,16 @@ public class MesiboListeners implements Mesibo.ConnectionListener, ILoginInterfa
 
             if (response.op.equals("login")) {
                 if (!TextUtils.isEmpty(SampleAPI.getToken())) {
-                    Mesibo.UserProfile u = Mesibo.getSelfProfile();
+                    MesiboProfile u = Mesibo.getSelfProfile();
 
-                    if (TextUtils.isEmpty(u.name)) {
-                        UIManager.launchUserRegistration(mLoginContext, 0);
+                    if (TextUtils.isEmpty(u.getName())) {
+                        UIManager.launchEditProfile(mLoginContext, 0, 0, true);
                     } else {
                         UIManager.launchMesibo(mLoginContext, 0, false, true);
                     }
                 }
 
-                if(null != mILoginResultsInterface)
+                if(null != mILoginResultsInterface && null == response.errmsg)
                     mILoginResultsInterface.onLoginResult(response.result.equals("OK"), -1);
 
             } else if (response.op.equals("setgroup")) {
@@ -159,7 +162,9 @@ public class MesiboListeners implements Mesibo.ConnectionListener, ILoginInterfa
 
     @Override
     public boolean Mesibo_onMessage(Mesibo.MessageParams params, byte[] data) {
-        SampleAPI.autoAddContact(params);
+        if(Mesibo.ORIGIN_REALTIME != params.origin || Mesibo.MSGSTATUS_OUTBOX == params.getStatus())
+            return true;
+
         if(Mesibo.isReading(params))
             return true;
 
@@ -175,69 +180,66 @@ public class MesiboListeners implements Mesibo.ConnectionListener, ILoginInterfa
 
     @Override
     public void Mesibo_onMessageStatus(Mesibo.MessageParams params) {
-
     }
 
     @Override
     public void Mesibo_onActivity(Mesibo.MessageParams params, int i) {
-        SampleAPI.autoAddContact(params); // we start fetching contact when user started typing
     }
 
     @Override
     public void Mesibo_onLocation(Mesibo.MessageParams params, Mesibo.Location location) {
-        SampleAPI.autoAddContact(params);
         SampleAPI.notify(params, "Location");
     }
 
     @Override
     public void Mesibo_onFile(Mesibo.MessageParams params, Mesibo.FileInfo fileInfo) {
-        SampleAPI.autoAddContact(params);
         SampleAPI.notify(params, "Attachment");
     }
 
     @Override
-    public boolean Mesibo_onUpdateUserProfiles(Mesibo.UserProfile profile) {
+    public void Mesibo_onProfileUpdated(MesiboProfile userProfile) {
+
+    }
+
+    @Override
+    public boolean Mesibo_onGetProfile(MesiboProfile profile) {
         if(null == profile) {
-            //This is a sub-optimal approach, use only if backend does not implement contact update support
-            //SampleAPI.getContacts(null, null, true);
             return false;
         }
 
-        if((profile.flag& Mesibo.UserProfile.FLAG_DELETED) > 0) {
+        if(profile.isDeleted()) {
             if(profile.groupid > 0) {
-                profile.lookedup = true; //else getProfile will be recursive call
-                SampleAPI.updateDeletedGroup(profile.groupid);
+                profile.lookedup = true; 
+                //SampleAPI.updateDeletedGroup(profile.groupid);
                 return true;
             }
         }
 
         if(profile.groupid > 0) {
-            profile.status = SampleAPI.groupStatusFromMembers(profile.groupMembers);
             return true;
         }
 
         if(!TextUtils.isEmpty(profile.address)) {
+            long ts = Mesibo.getTimestamp();
             String name = ContactUtils.reverseLookup(profile.address);
-            if(null == name)
-                return false;
+            if(null == name) {
+                return mSyncDone;
+            }
 
-            if(profile.name != null && profile.name.equalsIgnoreCase(name))
-                return false;
-
-            profile.name = name;
+            profile.setOverrideName(name);
             return true;
         }
 
-        return false; //group
+        return false;
     }
 
     @Override
-    public void Mesibo_onShowProfile(Context context, Mesibo.UserProfile userProfile) {
+    public void Mesibo_onShowProfile(Context context, MesiboProfile userProfile) {
         UIManager.launchUserProfile(context, userProfile.groupid, userProfile.address);
     }
 
     @Override
-    public void Mesibo_onDeleteProfile(Context c, Mesibo.UserProfile u, Handler handler) {
+    public void Mesibo_onDeleteProfile(Context c, MesiboProfile u, Handler handler) {
 
     }
 
@@ -293,33 +295,6 @@ public class MesiboListeners implements Mesibo.ConnectionListener, ILoginInterfa
         return false;
     }
 
-    @Override
-    public void Mesibo_onSetGroup(Context context, long groupid, String name, int type, String status, String photoPath, String[] members, Handler handler) {
-        mGroupHandler = handler;
-        if(null == name && null == status && null == photoPath) {
-            mHandler.setContext(context);
-            SampleAPI.setProfilePicture(null, groupid, mHandler);
-            return;
-        }
-        SampleAPI.setGroup(groupid, name, status, photoPath, members, mHandler);
-    }
-
-    @Override
-    public void Mesibo_onGetGroup(Context context, long groupid, Handler handler) {
-        mGroupHandler = handler;
-        mHandler.setContext(context);
-        SampleAPI.getGroup(groupid, mHandler);
-    }
-
-    @Override
-    public ArrayList<Mesibo.UserProfile> Mesibo_onGetGroupMembers(Context context, long groupid) {
-        Mesibo.UserProfile profile = Mesibo.getUserProfile(groupid);
-        if(null == profile)
-            return null;
-
-        return SampleAPI.getGroupMembers(profile.groupMembers);
-    }
-
     //Note this is not in UI thread
     @Override
     public boolean Mesibo_onMessageFilter(Mesibo.MessageParams messageParams, int i, byte[] data) {
@@ -328,51 +303,13 @@ public class MesiboListeners implements Mesibo.ConnectionListener, ILoginInterfa
         if(1 != messageParams.type || messageParams.isCall())
             return true;
 
-        String message = "";
-        try {
-            message = new String(data, "UTF-8");
-        } catch (Exception e) {
-            return false;
-        }
-
-        if(TextUtils.isEmpty(message))
-            return false;
-
-        MesiboNotification n = null;
-
-        try {
-            n = mGson.fromJson(message, MesiboNotification.class);
-        } catch (Exception e) {
-            return false;
-        }
-
-        if(null == n)
-            return false;
-
-        String name = n.name;
-        if(!TextUtils.isEmpty(n.phone)) {
-            name = ContactUtils.reverseLookup(n.phone);
-            if(TextUtils.isEmpty(name))
-                name = n.name;
-        }
-
-        if(!TextUtils.isEmpty(n.subject)) {
-            n.subject = n.subject.replace("%NAME%", name);
-            n.msg = n.msg.replace("%NAME%", name);
-            SampleAPI.notify(NotifyUser.NOTIFYMESSAGE_CHANNEL_ID, NotifyUser.TYPE_OTHER, n.subject, n.msg);
-        }
-
-        if(!TextUtils.isEmpty(n.phone) || n.gid > 0) {
-            SampleAPI.createContact(n.name, n.phone, n.gid, n.status, n.members, n.photo, n.tn, n.ts, (Mesibo.getTimestamp()-messageParams.ts)/1000, false, true, SampleAPI.VISIBILITY_UNCHANGED);
-        }
-
         return false;
     }
 
     @Override
-    public MesiboCall.CallProperties MesiboCall_OnIncoming(Mesibo.UserProfile userProfile, boolean video) {
+    public MesiboCall.CallProperties MesiboCall_OnIncoming(MesiboProfile userProfile, boolean video) {
         MesiboCall.CallProperties cc = MesiboCall.getInstance().createCallProperties(video);
-        cc.parent = MainApplication.getAppContext();
+        cc.parent = getApplicationContext();
         cc.user = userProfile;
         return cc;
     }
@@ -387,7 +324,7 @@ public class MesiboListeners implements Mesibo.ConnectionListener, ILoginInterfa
     }
 
     @Override
-    public boolean MesiboCall_onNotify(int type, Mesibo.UserProfile profile, boolean video) {
+    public boolean MesiboCall_onNotify(int type, MesiboProfile profile, boolean video) {
         String subject = null, message = null;
 
         if(true)
@@ -397,19 +334,43 @@ public class MesiboListeners implements Mesibo.ConnectionListener, ILoginInterfa
 
         } else if(MesiboCall.MESIBOCALL_NOTIFY_MISSED == type) {
             subject = "Mesibo Missed Call";
-            message = "You missed a mesibo " + (video?"video ":"") + "call from " + profile.name;
+            message = "You missed a mesibo " + (video?"video ":"") + "call from " + profile.getName();
 
         }
 
-        /* we are using id 2 as id 0 is is used by messaging and it is cleared when
-           userlist resumes (which is the case when call screen closes)
-         */
-        if(null != message)
-            SampleAPI.notify(NotifyUser.NOTIFYCALL_CHANNEL_ID, 2, subject, message);
 
         return true;
     }
 
+    @Override
+    public void Mesibo_onGroupCreated(MesiboProfile groupProfile) {
+        Log.d(TAG, "New group " + groupProfile.groupid);
+    }
+
+    @Override
+    public void Mesibo_onGroupJoined(MesiboProfile groupProfile) {
+        SampleAPI.notify(3, "Joined a group", "You have been added to the group " + groupProfile.getName());
+    }
+
+    @Override
+    public void Mesibo_onGroupLeft(MesiboProfile groupProfile) {
+        SampleAPI.notify(3, "Left a group", "You left the group " + groupProfile.getName());
+    }
+
+    @Override
+    public void Mesibo_onGroupMembers(MesiboProfile groupProfile, MesiboGroupProfile.Member[] members) {
+
+    }
+
+    @Override
+    public void Mesibo_onGroupMembersJoined(MesiboProfile groupProfile, MesiboGroupProfile.Member[] members) {
+
+    }
+
+    @Override
+    public void Mesibo_onGroupMembersRemoved(MesiboProfile groupProfile, MesiboGroupProfile.Member[] members) {
+
+    }
 
     @Override
     public void Mesibo_onForeground(Context context, int screenId, boolean foreground) {
@@ -454,18 +415,6 @@ public class MesiboListeners implements Mesibo.ConnectionListener, ILoginInterfa
         return false;
     }
 
-    @Override
-    public boolean onAccountKitLogin(Context context, String accesstoken, ILoginResultsInterface iLoginResultsInterface) {
-        if(null == accesstoken)
-            return true; //return true to relaunch accountkit
-
-        mLoginContext = context;
-        mILoginResultsInterface = iLoginResultsInterface;
-        mHandler.setContext(context);
-        SampleAPI.loginAccountKit(accesstoken, mHandler);
-        return false;
-    }
-
     private static MesiboListeners _instance = null;
     public static MesiboListeners getInstance() {
         if(null==_instance)
@@ -482,79 +431,32 @@ public class MesiboListeners implements Mesibo.ConnectionListener, ILoginInterfa
     private static ArrayList<String> mContactsToSync = new ArrayList<String>();
     private static ArrayList<String> mDeletedContacts = new ArrayList<String>();
     private long mSyncTs = 0;
-    //This callback is not in UI thread
     @Override
-    public boolean ContactUtils_onContact(int type, String name, String phoneNumber, long ts) {
+    public boolean ContactUtils_onContact(String[] phoneNumbers, boolean deleted, String contacts, long ts) {
+        mSyncDone = true;
+        Mesibo.updateLookups();
+        if(null == phoneNumbers) return true;
 
-        if(ContactUtils.ContactsListener.TYPE_SYNCDELETED == type) {
-            mDeletedContacts.add(phoneNumber);
-            Mesibo.UserProfile profile = Mesibo.getUserProfile(phoneNumber, 0);
-
-            if(null != profile) {
-                // we don't send refresh as this usually would have happened from native
-                // contact screen and when screen resumes, it will anyway refresh
-                Mesibo.deleteUserProfile(profile, false, false);
+        int maxcount = 100; // we are limiting count to conserve memory
+        String[] phones = new String[maxcount];
+        for(int i=0; i < phoneNumbers.length; ) {
+            if((phoneNumbers.length - i) < maxcount) {
+                maxcount = (phoneNumbers.length - i);
+                phones = new String[maxcount];
             }
 
-            return true;
+            for(int j=0; j < maxcount; j++)
+                phones[j] = phoneNumbers[i++];
+
+
+            Mesibo.syncContacts(phones, !deleted, true, 0, false);
         }
 
+        if(phoneNumbers.length > 0)  Mesibo.syncContacts();
 
-        if(ContactUtils.ContactsListener.TYPE_SYNC == type) {
-            if(null != phoneNumber) {
-                String selfPhone = SampleAPI.getPhone();
-                if(!TextUtils.isEmpty(selfPhone) && selfPhone.equalsIgnoreCase(phoneNumber)) {
-                    ContactUtils.synced(phoneNumber, ts, ContactUtils.ContactsListener.TYPE_SYNC);
-                    return true;
-                }
-
-                mContactsToSync.add(phoneNumber);
-                if(mSyncTs < ts)
-                    mSyncTs = ts;
-            }
-
-            // if sync completed, sync unsent numbers
-            if(null == phoneNumber || mContactsToSync.size() >= 100) {
-
-                if(mContactsToSync.size() > 0) {
-                    boolean rv = SampleAPI.getContacts(mContactsToSync, false, false);
-                    if(!rv) return false;
-
-                    String[] c = mContactsToSync.toArray(new String[mContactsToSync.size()]);
-                    ContactUtils.synced(c, ts, ContactUtils.ContactsListener.TYPE_SYNC);
-
-                    mContactsToSync.clear();
-                    mSyncTs = 0;
-
-                }
-            }
-
-            if(null == phoneNumber && mDeletedContacts.size() > 0) {
-                boolean rv = SampleAPI.deleteContacts(mDeletedContacts);
-                if(rv) {
-                    String[] c = mDeletedContacts.toArray(new String[mDeletedContacts.size()]);
-                    ContactUtils.synced(c, ts, ContactUtils.ContactsListener.TYPE_SYNCDELETED);
-                    mDeletedContacts.clear();
-                }
-            }
-
-            if(null == phoneNumber)
-                SampleAPI.syncDone();
-        }
-
+        if(!deleted)  SampleAPI.saveLocalSyncedContacts(contacts, ts);
         return true;
     }
-
-    @Override
-    public boolean ContactUtils_onSave(String contacts, long timestamp) {
-        if(null == contacts)
-            contacts = "";
-
-
-        SampleAPI.saveLocalSyncedContacts(contacts, timestamp);
-        return true;
-    }
-
 
 
     @Override
@@ -563,9 +465,7 @@ public class MesiboListeners implements Mesibo.ConnectionListener, ILoginInterfa
     }
 
     @Override
-    public void Mesibo_onGCMMessage(/*Bundle data,*/ boolean inService) {
+    public void Mesibo_onGCMMessage(/*Bundle data, */boolean inService) {
         SampleAPI.onGCMMessage(inService);
     }
-
-
 }

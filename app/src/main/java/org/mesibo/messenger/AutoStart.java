@@ -1,6 +1,6 @@
 package org.mesibo.messenger;
 
-/** Copyright (c) 2019 Mesibo
+/** Copyright (c) 2021 Mesibo
  * https://mesibo.com
  * All rights reserved.
  *
@@ -43,6 +43,8 @@ package org.mesibo.messenger;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+
+import com.mesibo.api.Mesibo;
 
 public class AutoStart extends BroadcastReceiver
 {

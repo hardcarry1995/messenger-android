@@ -1,6 +1,6 @@
 package org.mesibo.messenger;
 
-/** Copyright (c) 2019 Mesibo
+/** Copyright (c) 2021 Mesibo
  * https://mesibo.com
  * All rights reserved.
  *
@@ -50,12 +50,11 @@ import android.util.Log;
 public class AppConfig {
     private static final String TAG = "AppSettings";
     public static final String sharedPrefKey = "org.mesibo.messenger";
-    private static final String systemPreferenceKey = "settings";
+    private static final String systemPreferenceKey = "mesibo-app-settings";
 
     public static class Configuration {
         public String token = "";
         public String phone = "";
-        public String cc = "";
         public SampleAPI.Invite invite = null;
         public String uploadurl = null;
         public String downloadurl = null;
@@ -63,7 +62,6 @@ public class AppConfig {
         public void reset() {
             token = "";
             phone = "";
-            cc = "";
             invite = null;
             uploadurl = "";
             downloadurl = "";
@@ -77,7 +75,6 @@ public class AppConfig {
     private Context mContext;
     SharedPreferences mSharedPref = null;
 
-    static private BackupManager bm = null;
 
     public static AppConfig getInstance() {
         return _instance;
@@ -91,7 +88,6 @@ public class AppConfig {
     public AppConfig(Context c) {
         _instance = this;
         mContext = c;
-        bm = new BackupManager(mContext);
 
         mSharedPref = c.getSharedPreferences(sharedPrefKey, Context.MODE_PRIVATE);
         firstTime = false;
@@ -106,7 +102,6 @@ public class AppConfig {
     }
 
     private void backup() {
-        bm.dataChanged();
     }
 
     public Boolean isFirstTime() {
@@ -132,10 +127,6 @@ public class AppConfig {
     }
 
     public static void reset() {
-        //CrashLogs.setUID(0);
-
-        //mConfig = new Configuration(); // we should not create new instance else app using this instance will have
-        // and issue
         mConfig.reset();
         save();
         getInstance().backup();
@@ -160,7 +151,6 @@ public class AppConfig {
             return false;
         }
 
-        //return false;
     }
 
     public boolean setStringValue(String key, String value) {
@@ -169,7 +159,6 @@ public class AppConfig {
                 SharedPreferences.Editor poEditor = mSharedPref.edit();
                 poEditor.putString(key, value);
                 poEditor.commit();
-                //backup();
                 return true;
             }
         } catch (Exception e) {
@@ -260,48 +249,6 @@ public class AppConfig {
         }
     }
 
-    public Boolean getBooleanValue(String key, Boolean defaultVal) {
-        Log.d(TAG, "Getting long value for " + key + " in RMS directly");
-        try {
-            synchronized (mSharedPref) {
-                if (mSharedPref.contains(key))
-                    return mSharedPref.getBoolean(key, defaultVal);
-                return defaultVal;
-            }
-        } catch (Exception e) {
-            Log.d(TAG, "Unable to fet long value in RMS:" + e.getMessage());
-            return defaultVal;
-        }
-    }
-
-    /*
-    private static String serializeVector(Vector<String> vss) {
-        ByteArrayOutputStream arrayOutputStream = new ByteArrayOutputStream();
-        ObjectOutputStream out;
-        try {
-            out = new ObjectOutputStream(arrayOutputStream);
-            out.writeObject(vss);
-            out.close();
-            arrayOutputStream.close();
-        } catch (IOException e) {
-        }
-        return DataUtils.bytesToHex(arrayOutputStream.toByteArray());
-    }
-
-    private static Vector<String> deSerializeVector(String s) {
-        Vector<String> vss = null;
-        ByteArrayInputStream byteArray = null;
-        byteArray = new ByteArrayInputStream(DataUtils.hexToBytes(s));
-
-        ObjectInputStream in;
-        try {
-            in = new ObjectInputStream(byteArray);
-            vss = (Vector<String>) in.readObject();
-        } catch (Exception e) {
-        }
-        return vss;
-    }
-    */
 
 };
 

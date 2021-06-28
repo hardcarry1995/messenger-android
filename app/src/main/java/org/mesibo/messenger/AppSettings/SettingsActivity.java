@@ -103,10 +103,6 @@ public class SettingsActivity extends AppCompatActivity {
         ab.setTitle("Settings");
     }
 
-    @Override
-    protected void onPause() {
-        super.onPause();
-    }
 
     @Override
     public void onBackPressed() {

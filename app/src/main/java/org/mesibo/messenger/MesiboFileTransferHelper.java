@@ -41,9 +41,14 @@
 package org.mesibo.messenger;
 
 import android.os.Bundle;
+import android.text.TextUtils;
+import android.util.Log;
 
 import com.google.gson.Gson;
 import com.mesibo.api.Mesibo;
+
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 public class MesiboFileTransferHelper implements Mesibo.FileTransferHandler {
 
@@ -64,7 +69,7 @@ public class MesiboFileTransferHelper implements Mesibo.FileTransferHandler {
     }
 
     MesiboFileTransferHelper() {
-        	Mesibo.addListener(this);
+        	//Mesibo.addListener(this);
     }
     
     public boolean Mesibo_onStartUpload(Mesibo.MessageParams params, final Mesibo.FileInfo file) {

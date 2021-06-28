@@ -75,13 +75,15 @@ import android.widget.PopupWindow;
 import android.widget.TextView;
 
 import com.mesibo.api.Mesibo;
-import com.mesibo.api.MesiboUtils;
+import com.mesibo.api.MesiboProfile;
+import com.mesibo.api.MesiboSelfProfile;
 import com.mesibo.emojiview.EmojiconEditText;
 import com.mesibo.emojiview.EmojiconGridView;
 import com.mesibo.emojiview.EmojiconsPopup;
 import com.mesibo.emojiview.emoji.Emojicon;
 import com.mesibo.mediapicker.MediaPicker;
-import com.mesibo.messaging.MesiboActivity;
+import com.mesibo.messaging.RoundImageDrawable;
+
 import org.mesibo.messenger.Utils.AppUtils;
 
 import java.io.File;
@@ -92,20 +94,17 @@ import java.io.IOException;
 import static android.app.Activity.RESULT_OK;
 import static android.content.ContentValues.TAG;
 
-public class EditProfileFragment extends android.support.v4.app.Fragment implements MediaPicker.ImageEditorListener, Mesibo.FileTransferListener
+public class EditProfileFragment extends android.support.v4.app.Fragment implements MediaPicker.ImageEditorListener
 {
     public  View mView=null;
     //private RoundedImageView mProfileImage;
     private ImageView mProfileImage;
 
     private  ImageView  mProfileButton;
-    private String mTempFilePath = Mesibo.getFilePath(Mesibo.FileInfo.TYPE_PROFILEIMAGE) + "myProfile.jpg";
 
     private ProgressDialog mProgressDialog ;
     private static int MAX_NAME_CHAR = 50;
-    private static int MIN_NAME_CHAR = 3;
     private static int MAX_STATUS_CHAR = 150;
-    private static int MIN_STATUS_CHAR = 3;
 
     EmojiconEditText mEmojiNameEditText;
     EmojiconEditText mEmojiStatusEditText;
@@ -115,21 +114,36 @@ public class EditProfileFragment extends android.support.v4.app.Fragment impleme
 
     TextView mNameCharCounter;
     TextView mStatusCharCounter;
-    private Mesibo.UserProfile mProfile = Mesibo.getSelfProfile();
 
     Fragment mHost;
     LinearLayout mSaveBtn;
     TextView mPhoneNumber;
     private static Boolean mSettingsMode = false;
+    private long mGroupId = 0;
+    private boolean mLaunchMesibo = false;
 
     static final int CAMERA_PERMISSION_CODE = 102;
 
     public static final String TITLE_PERMISON_CAMERA_FAIL = "Permission Denied";
-    public static final String MSG_PERMISON_CAMERA_FAIL = "Camera permission was denied by you! Change the permission from settings menu";
+    public static final String MSG_PERMISON_CAMERA_FAIL = "Camera permission was denied by you! Grant the permission to continue";
 
     public EditProfileFragment() {
-        // Required empty public constructor
+        mGroupId = 0;
     }
+    
+    public void setGroupId(long groupid) {
+        mGroupId = groupid;
+    }
+
+    public void setLaunchMesibo(boolean launchMesibo) {
+        mLaunchMesibo = launchMesibo;
+    }
+
+    public MesiboProfile getProfile() {
+        if(mGroupId > 0) return Mesibo.getProfile(mGroupId);
+        return Mesibo.getSelfProfile();
+    }
+
     @Override
     public void onRequestPermissionsResult(int requestCode,
                                            String permissions[], int[] grantResults) {
@@ -148,86 +162,22 @@ public class EditProfileFragment extends android.support.v4.app.Fragment impleme
 
         }
 
-        // other 'case' lines to check for other
-        // permissions this app might request
-
     }
     public void activateInSettingsMode() {
         mSettingsMode = true;
     }
-    private SampleAPI.ResponseHandler mHandler = new SampleAPI.ResponseHandler() {
-        @Override
-        public void HandleAPIResponse(SampleAPI.Response response) {
-            Log.d(TAG, "Response: " + response);
-
-            //http://stackoverflow.com/questions/22924825/view-not-attached-to-window-manager-crash
-            if(null == getActivity())
-                return;
-
-            if(/*&& !getActivity().isDestroyed()*/  mProgressDialog.isShowing())
-                mProgressDialog.dismiss();
-
-            if (null == response)
-                return;
-
-
-            if (response.op.equals("upload")) {
-                if (null != SampleAPI.getToken() && response.result.equals("OK")) {
-                    mProfile = Mesibo.getSelfProfile();
-
-                    if(TextUtils.isEmpty(mProfile.picturePath)) {
-                        setUserPicture();
-                        return;
-                    }
-
-                    //TBD, copy original picture so that download is not required - this may be having issue as
-                    // we uploaded cropped version
-                    String profilePath = Mesibo.getFilePath(Mesibo.FileInfo.TYPE_PROFILEIMAGE) + response.photo;
-                    if(Mesibo.renameFile(mTempFilePath, profilePath, true)) {
-                    }
-
-                    setUserPicture();
-                }
-
-            } else if (response.op.equals("profile")) {
-                if (null != SampleAPI.getToken() && response.result.equals("OK")) {
-                    mProfile.name = mEmojiNameEditText.getText().toString();
-                    mProfile.status = mEmojiStatusEditText.getText().toString();
-                    Mesibo.setSelfProfile(mProfile);
-
-                    if(mSettingsMode) {
-                        getActivity().onBackPressed();
-                    }else {
-                        Intent myIntent = new Intent(getActivity(), MesiboActivity.class);
-                        myIntent.putExtra("homebtn", true);
-                        startActivity(myIntent);
-                    }
-                }
-
-            }
-        }
-    };
-
-    @Override
-    public boolean Mesibo_onFileTransferProgress(Mesibo.FileInfo file) {
-        if(100 == file.getProgress())
-            setUserPicture();
-
-        return true;
-    }
 
     void setUserPicture() {
-        String filePath = Mesibo.getUserProfilePicturePath(mProfile, Mesibo.FileInfo.TYPE_AUTO);
+        String filePath = getProfile().getImagePath();
 
         Bitmap b;
         if(Mesibo.fileExists(filePath)) {
             b = BitmapFactory.decodeFile(filePath);
             if(null != b) {
-                mProfileImage.setImageDrawable(MesiboUtils.getRoundImageDrawable(b));
+                mProfileImage.setImageDrawable(new RoundImageDrawable(b));
             }
         } else {
-            //TBD, getActivity.getresource crashes sometime if activity is closing
-            mProfileImage.setImageDrawable(MesiboUtils.getRoundImageDrawable(BitmapFactory.decodeResource(MainApplication.getAppContext().getResources(), com.mesibo.messaging.R.drawable.default_user_image)));
+            mProfileImage.setImageDrawable(new RoundImageDrawable(BitmapFactory.decodeResource(MainApplication.getAppContext().getResources(), com.mesibo.messaging.R.drawable.default_user_image)));
         }
     }
 
@@ -237,14 +187,6 @@ public class EditProfileFragment extends android.support.v4.app.Fragment impleme
         // Inflate the layout for this fragment
         View v = inflater.inflate(R.layout.fragment_register_new_profile, container, false);
 
-        if(null == mProfile) {
-            //TBD, set warning
-            getActivity().finish();
-            return v;
-        }
-
-
-
         final ActionBar ab = ((AppCompatActivity)getActivity()).getSupportActionBar();
         if(null != ab) {
             ab.setDisplayHomeAsUpEnabled(true);
@@ -253,9 +195,12 @@ public class EditProfileFragment extends android.support.v4.app.Fragment impleme
         mView = v;
 
         mHost = this;
-        mProgressDialog = AppUtils.getProgressDialog(getActivity(), "Please wait...");
-        mPhoneNumber = (TextView)v.findViewById(R.id.profile_self_phone);
-        mPhoneNumber.setText(mProfile.address);
+        mPhoneNumber = (TextView) v.findViewById(R.id.profile_self_phone);
+        if(0 == mGroupId) {
+            mPhoneNumber.setText(getProfile().address);
+        } else {
+            mPhoneNumber.setVisibility(View.GONE);
+        }
 
         mSaveBtn = (LinearLayout) v.findViewById(R.id.register_profile_save);
         mSaveBtn.setOnClickListener(new View.OnClickListener() {
@@ -263,37 +208,26 @@ public class EditProfileFragment extends android.support.v4.app.Fragment impleme
             public void onClick(View v) {
 
                 String name = mEmojiNameEditText.getText().toString();
-
-                if(false && name.length() < MIN_NAME_CHAR) {
-                    openDialogue("Name can not be less than 3 characters", "Change Name");
-                    return ;
-                }
+                MesiboProfile profile = getProfile();
+                profile.setName(name);
 
                 String status = mEmojiStatusEditText.getText().toString();
-                if(false && status.length()  < MIN_STATUS_CHAR) {
-                    openDialogue("Status can not be less than 3 characters", "Change Status");
-                    return ;
+                profile.setStatus(status);
+                profile.save();
+                if(mLaunchMesibo) {
+                    UIManager.launchMesibo(getActivity(), 0, false, true);
                 }
-
-                if(TextUtils.isEmpty(mProfile.name) || !name.equalsIgnoreCase(mProfile.name) || TextUtils.isEmpty(mProfile.status) || !status.equalsIgnoreCase(mProfile.status)) {
-                    mProgressDialog.show();
-                    mHandler.setContext(getActivity());
-                    SampleAPI.setProfile(mEmojiNameEditText.getText().toString(), mEmojiStatusEditText.getText().toString(), 0, mHandler);
-                } else {
-                    getActivity().finish();
-                }
-
+                getActivity().finish();
             }
         });
 
         mProfileImage = (ImageView) v.findViewById(R.id.self_user_image);
-        Mesibo.startUserProfilePictureTransfer(mProfile, this);
         setUserPicture();
 
         mProfileImage.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                UIManager.launchImageViewer(getActivity(), Mesibo.getUserProfilePicturePath(mProfile, Mesibo.FileInfo.TYPE_AUTO));
+                UIManager.launchImageViewer(getActivity(), getProfile().getImagePath());
             }
         });
 
@@ -318,8 +252,10 @@ public class EditProfileFragment extends android.support.v4.app.Fragment impleme
                             MediaPicker.launchPicker(getActivity(), MediaPicker.TYPE_FILEIMAGE);
                             return true;
                         } else if (item.getItemId() == R.id.popup_remove) {
-                            mHandler.setContext(getActivity());
-                            SampleAPI.setProfilePicture(null, 0, mHandler);
+                            setImageProfile(null);
+                            MesiboProfile profile = getProfile();
+                            profile.setImage(null);
+                            profile.save();
                             return true;
                         }
                         return false;
@@ -341,8 +277,8 @@ public class EditProfileFragment extends android.support.v4.app.Fragment impleme
         mNameCharCounter.setText(String.valueOf(MAX_NAME_CHAR));
 
         mEmojiNameEditText = (EmojiconEditText) v.findViewById(R.id.name_emoji_edittext);
-        if(!TextUtils.isEmpty(mProfile.name))
-            mEmojiNameEditText.setText(mProfile.name);
+        if(!TextUtils.isEmpty(getProfile().getName()))
+            mEmojiNameEditText.setText(getProfile().getName());
         mEmojiNameEditText.setFilters(new InputFilter[]{new InputFilter.LengthFilter(MAX_NAME_CHAR)});
         mEmojiNameEditText.addTextChangedListener(new TextWatcher() {
             @Override
@@ -367,8 +303,8 @@ public class EditProfileFragment extends android.support.v4.app.Fragment impleme
         mStatusCharCounter.setText(String.valueOf(MAX_STATUS_CHAR));
 
         mEmojiStatusEditText = (EmojiconEditText) v.findViewById(R.id.status_emoji_edittext);
-        if(!TextUtils.isEmpty(mProfile.status))
-            mEmojiStatusEditText.setText(mProfile.status);
+        if(!TextUtils.isEmpty(getProfile().getStatus()))
+            mEmojiStatusEditText.setText(getProfile().getStatus());
         mEmojiStatusEditText.setFilters(new InputFilter[]{new InputFilter.LengthFilter(MAX_STATUS_CHAR)});
         mEmojiStatusEditText.addTextChangedListener(new TextWatcher() {
             @Override
@@ -529,8 +465,7 @@ public class EditProfileFragment extends android.support.v4.app.Fragment impleme
         if(null == filePath)
             return;
 
-        UIManager.launchImageEditor((AppCompatActivity)getActivity(), MediaPicker.TYPE_FILEIMAGE, -1, null, filePath, false, false, true, true, 600, this);
-        //mProgressDialog.show();
+        UIManager.launchImageEditor((AppCompatActivity)getActivity(), MediaPicker.TYPE_FILEIMAGE, -1, null, filePath, false, false, true, true, 1200, this);
     }
 
 
@@ -539,72 +474,24 @@ public class EditProfileFragment extends android.support.v4.app.Fragment impleme
     }
 
     public void setImageProfile (Bitmap bmp) {
-        mProfileImage.setImageDrawable(MesiboUtils.getRoundImageDrawable(bmp));
+        if(null == bmp)
+            bmp = BitmapFactory.decodeResource(getResources(), R.drawable.default_user_image);
 
-    }
+        mProfileImage.setImageDrawable(new RoundImageDrawable(bmp));
 
-    public void openDialogue(String title, String message){
-        AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(getActivity());
-        //alertDialogBuilder.setTitle(title);
-        alertDialogBuilder.setMessage(message);
-                alertDialogBuilder.setPositiveButton("OK",
-                        new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface arg0, int arg1) {
-
-                            }
-                        });
-
-
-        AlertDialog alertDialog = alertDialogBuilder.create();
-        alertDialog.show();
     }
 
     public void onImageEdit(int i, String s, String filePath, Bitmap bitmap, int status) {
-        //SampleAPI.setProfilePicture(mProfileFilePath, 0, mHandler);
         if(0 != status) {
-            if(mProgressDialog.isShowing())
-                mProgressDialog.dismiss();
             return;
         }
 
-        if(!saveBitmpToFilePath(bitmap, mTempFilePath)) {
-            if(mProgressDialog.isShowing())
-                mProgressDialog.dismiss();
-            return;
-        }
-
-        mHandler.setContext(getActivity());
-        SampleAPI.setProfilePicture(mTempFilePath, 0, mHandler);
+        MesiboProfile profile = getProfile();
+        profile.setImage(bitmap);
+        profile.save();
         setImageProfile(bitmap);
     }
 
-    public static  boolean saveBitmpToFilePath(Bitmap bmp, String filePath) {
-        File file = new File(filePath);
-        FileOutputStream fOut = null;
-        try {
-            fOut = new FileOutputStream(file);
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-            return false;
-        }
 
-        if(null != bmp) {
-            bmp.compress(Bitmap.CompressFormat.JPEG, 80, fOut);
-
-            try {
-                fOut.flush();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            try {
-                fOut.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-
-        return true;
-    }
 
 }
