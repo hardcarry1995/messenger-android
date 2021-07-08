@@ -22,6 +22,12 @@ Latest versions are also available through Google Play Store and Apple App Store
   <img alt="Get it on Apple App Store" height="80"
   src="https://media.mesibo.com/files/mesibo/appstore.png" /></a>
 
+### Generating OTP for the demo
+You can generate OTP for any number from the [mesibo console](https://mesibo.com/console)
+
+Note that, all the users are private to your app/account. The demo app can not see or communicate with users from other apps. Also, the demo app uses contact synchronization to find other users of your app and hence ensure to use the correct phone number and other users are in your phone book. 
+
+
 ## Downloading the Source Code
 
 ### Clone the Repository (Recommended)
@@ -55,7 +61,7 @@ Building the code is as simple as:
  5. Once the build is over, run on the device using menu `Run -> Run (app)`
  6. That's it, you should see the welcome screen like below.
 
-Login using your phone number and OTP 123456. You can even start using the app you've just built to communicate with your family and friends.
+Login using your phone number and OTP from the mesibo console. You can even start using the app you've just built to communicate with your family and friends.
 
 ## Key SDKs user in this project
 
