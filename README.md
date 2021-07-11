@@ -1,8 +1,6 @@
 ## Mesibo Messenger for Android
 Mesibo Messenger is an open-source app with real-time messaging, voice and video call features. This repo contains the source code for Mesibo Messenger App for Android. The GitHub repository for iOS version is [here](https://github.com/mesibo/messenger-app-ios).
 
-**Note**: We are working on a new version which can be found [here](https://github.com/mesibo/messenger-app-android-beta). This beta allows complete customization of Messaging, audio and video calling UI. 
-
 ### Features
 - One-on-one messaging and Group chat
 - High quality voice and video calling
@@ -23,10 +21,18 @@ Latest versions are also available through Google Play Store and Apple App Store
   src="https://media.mesibo.com/files/mesibo/appstore.png" /></a>
 
 ### Generating OTP for the demo
-You can generate OTP for any number from the [mesibo console](https://mesibo.com/console)
+The messenger App requires a valid phone number and OTP to login. You can generate OTP for any number from the [mesibo console](https://mesibo.com/console)
 
 Note that, all the users are private to your app/account. The demo app can not see or communicate with users from other apps. Also, the demo app uses contact synchronization to find other users of your app and hence ensure to use the correct phone number and other users are in your phone book. 
 
+### Documentation
+The documentation for the messanger is available here - [A fully featured WhatsApp clone using mesibo](https://mesibo.com/documentation/tutorials/open-source-whatsapp-clone/)
+
+It describes 
+- Compilation Instructions (Trivial though)
+- Customizing
+- Hosting Login Backend on your server
+- Hosting entire real-time messaging and call server on your server
 
 ## Downloading the Source Code
 
