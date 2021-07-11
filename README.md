@@ -22,7 +22,7 @@ If you prefer to try Pre-built messenger apps instead of building it, you can do
 <p>&nbsp;</p>
 
 ### Generating OTP for the demo
-The messenger App requires a valid phone number and OTP to login. You can generate OTP for any number from the [mesibo console](https://mesibo.com/console)
+The messenger App requires a valid phone number and OTP to login. Note that, we do not send OTP for App login. Instead, you can generate OTP for any number from the [mesibo console](https://mesibo.com/console)
 
 Note that, all the users are private to your app/account. The demo app can not see or communicate with users from other apps. Also, the demo app uses contact synchronization to find other users of your app and hence ensure to use the correct phone number and other users are in your phone book. 
 
