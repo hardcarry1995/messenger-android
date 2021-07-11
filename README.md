@@ -11,14 +11,15 @@ Mesibo Messenger is an open-source app with real-time messaging, voice and video
 - Online status (presence) and real-time profile update
 - Push notifications
 
-Latest versions are also available through Google Play Store and Apple App Store :
+Latest versions are also available from [Google Play Store](https://play.google.com/store/apps/details?id=com.mesibo.mesiboapplication) OR [Apple AppStore](https://itunes.apple.com/us/app/mesibo-realtime-messaging-voice-video/id1222921751)
 
-<a href="https://play.google.com/store/apps/details?id=com.mesibo.mesiboapplication"><img
-  alt="Get it on Google Play" height="80"
-  src="https://play.google.com/intl/en_us/badges/images/generic/en_badge_web_generic.png" /></a> 
-  <a href="https://itunes.apple.com/us/app/mesibo-realtime-messaging-voice-video/id1222921751">
-  <img alt="Get it on Apple App Store" height="80"
-  src="https://media.mesibo.com/files/mesibo/appstore.png" /></a>
+## Prebuilt Messenger Apps
+If you prefer to try Pre-built messenger apps instead of building it, you can download it from:
+
+<a href="https://play.google.com/store/apps/details?id=com.mesibo.mesiboapplication"><img alt="Get it on Google Play" height="80" src="https://play.google.com/intl/en_us/badges/images/generic/en_badge_web_generic.png" /></a> 
+<a href="https://itunes.apple.com/us/app/mesibo-realtime-messaging-voice-video/id1222921751"> <img alt="Get it on Apple App Store" height="80" src="https://mesibo.com/images/iphone-app.png" /></a>
+<br/><br/>
+<p>&nbsp;</p>
 
 ### Generating OTP for the demo
 The messenger App requires a valid phone number and OTP to login. You can generate OTP for any number from the [mesibo console](https://mesibo.com/console)
