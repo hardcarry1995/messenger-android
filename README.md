@@ -31,9 +31,9 @@ The documentation for the messenger is available here - [A fully featured WhatsA
 
 It describes 
 - Compilation Instructions (Trivial though)
-- Customizing It
-- Download [backend source code](https://github.com/mesibo/messenger-app-backend) and hosting it on your server (the default one is located on mesibo server)
+- Download [backend source code](https://github.com/mesibo/messenger-app-backend) and host it on your server (the default one is located on the mesibo server)
 - Hosting entire real-time messaging and call server in your premise
+- Other Customizations and Rebranding
 
 ## Downloading the Source Code
 
