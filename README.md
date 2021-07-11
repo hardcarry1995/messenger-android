@@ -27,13 +27,13 @@ The messenger App requires a valid phone number and OTP to login. You can genera
 Note that, all the users are private to your app/account. The demo app can not see or communicate with users from other apps. Also, the demo app uses contact synchronization to find other users of your app and hence ensure to use the correct phone number and other users are in your phone book. 
 
 ### Documentation
-The documentation for the messanger is available here - [A fully featured WhatsApp clone using mesibo](https://mesibo.com/documentation/tutorials/open-source-whatsapp-clone/)
+The documentation for the messenger is available here - [A fully featured WhatsApp clone using mesibo](https://mesibo.com/documentation/tutorials/open-source-whatsapp-clone/)
 
 It describes 
 - Compilation Instructions (Trivial though)
-- Customizing
-- Hosting Login Backend on your server
-- Hosting entire real-time messaging and call server on your server
+- Customizing It
+- Download [backend source code](https://github.com/mesibo/messenger-app-backend) and hosting it on your server (the default one is located on mesibo server)
+- Hosting entire real-time messaging and call server in your premise
 
 ## Downloading the Source Code
 
