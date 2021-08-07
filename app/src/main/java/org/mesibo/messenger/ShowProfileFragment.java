@@ -210,7 +210,6 @@ public class ShowProfileFragment extends Fragment implements Mesibo.MessageListe
         mExitGroupCard.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                mProgressDialog.show();
                 mUser.getGroupProfile().remove();
                 getActivity().finish();
             }

@@ -84,16 +84,13 @@ public class EditProfileActivity extends AppCompatActivity {
     @Override
     public  void onResume() {
         super.onResume();
-        if(!Mesibo.setAppInForeground(this, 0x101, true)) {
-            finish();
-            return;
-        }
+        Mesibo.setForegroundContext(this, 0x101, true);
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        Mesibo.setAppInForeground(this, 0x101, false);
+        Mesibo.setForegroundContext(this, 0x101, false);
     }
 
     @Override

@@ -247,10 +247,7 @@ public class ShowProfileActivity extends AppCompatActivity implements ShowProfil
     public void onResume() {
         super.onResume();
 
-        if(!Mesibo.setAppInForeground(this, 0x102, true)) {
-            finish();
-            return;
-        }
+        Mesibo.setForegroundContext(this, 0x102, true);
 
         if(mUserProfile.groupid > 0) {
             TextView userName = (TextView) findViewById(R.id.up_user_name);
@@ -264,13 +261,13 @@ public class ShowProfileActivity extends AppCompatActivity implements ShowProfil
     @Override
     protected void onPause() {
         super.onPause();
-        Mesibo.setAppInForeground(this, 0x102, false);
+        Mesibo.setForegroundContext(this, 0x102, false);
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        Mesibo.setAppInForeground(this, 0x102, false);
+        Mesibo.setForegroundContext(this, 0x102, false);
     }
 
 

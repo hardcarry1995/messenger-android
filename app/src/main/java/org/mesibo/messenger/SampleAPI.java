@@ -635,7 +635,7 @@ public class SampleAPI  {
        we are online. As soon as we return, service will be destroyed
      */
     public static void onGCMMessage(boolean inService) {
-        Mesibo.setAppInForeground(null, -1, true);
+        Mesibo.setForegroundContext(null, -1, true);
 
         while(inService) {
             if(Mesibo.STATUS_ONLINE == Mesibo.getConnectionStatus())

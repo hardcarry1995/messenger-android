@@ -93,10 +93,7 @@ public class SettingsActivity extends AppCompatActivity {
     public  void onResume() {
         super.onResume();
 
-        if(false && !Mesibo.setAppInForeground(this, 0x100, true)) {
-            finish();
-            return;
-        }
+        Mesibo.setForegroundContext(this, 0x100, true);
 
         final ActionBar ab = getSupportActionBar();
         ab.setDisplayHomeAsUpEnabled(true);
