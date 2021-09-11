@@ -444,6 +444,16 @@ public class ShowProfileFragment extends Fragment implements Mesibo.MessageListe
     }
 
     @Override
+    public void Mesibo_onGroupSettings(MesiboProfile mesiboProfile, MesiboGroupProfile.GroupSettings groupSettings, MesiboGroupProfile.MemberPermissions memberPermissions, MesiboGroupProfile.GroupPin[] groupPins) {
+
+    }
+
+    @Override
+    public void Mesibo_onGroupError(MesiboProfile mesiboProfile, long l) {
+
+    }
+
+    @Override
     public void MesiboProfile_onUpdate(MesiboProfile userProfile) {
         if(null != mAdapter)
             mAdapter.notifyDataSetChanged();

@@ -373,6 +373,16 @@ public class MesiboListeners implements Mesibo.ConnectionListener, ILoginInterfa
     }
 
     @Override
+    public void Mesibo_onGroupSettings(MesiboProfile mesiboProfile, MesiboGroupProfile.GroupSettings groupSettings, MesiboGroupProfile.MemberPermissions memberPermissions, MesiboGroupProfile.GroupPin[] groupPins) {
+
+    }
+
+    @Override
+    public void Mesibo_onGroupError(MesiboProfile mesiboProfile, long l) {
+
+    }
+
+    @Override
     public void Mesibo_onForeground(Context context, int screenId, boolean foreground) {
 
         //userlist is in foreground
