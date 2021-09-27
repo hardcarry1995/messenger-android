@@ -50,6 +50,7 @@ import com.mesibo.api.Mesibo;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+// Refer to http://mesibo.com/documentation/get-started/file-transfer/#how-to-send-and-receive-files
 public class MesiboFileTransferHelper implements Mesibo.FileTransferHandler {
 
     private static Gson mGson = new Gson();

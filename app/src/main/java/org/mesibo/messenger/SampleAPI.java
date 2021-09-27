@@ -201,6 +201,8 @@ public class SampleAPI  {
         public String error;
         public String errmsg;
         public String errtitle;
+        public String message;
+        public String title;
         public String token;
         public Contacts[] contacts;
         public String name;

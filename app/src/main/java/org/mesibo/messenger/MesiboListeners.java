@@ -98,6 +98,8 @@ public class MesiboListeners implements Mesibo.ConnectionListener, ILoginInterfa
     String mCode = null;
     String mPhone = null;
     boolean mSyncDone = false;
+    Context mUserListContext = null;
+    Context mMessageContext = null;
 
     @SuppressWarnings("all")
     private SampleAPI.ResponseHandler mHandler = new SampleAPI.ResponseHandler() {
@@ -149,9 +151,10 @@ public class MesiboListeners implements Mesibo.ConnectionListener, ILoginInterfa
     public void Mesibo_onConnectionStatus(int status) {
         Log.d(TAG, "on Mesibo Connection: " + status);
         if (Mesibo.STATUS_SIGNOUT == status) {
-            //TBD, Prompt
+            UIManager.showAlert(mUserListContext, "Signed Out", "You have signed-in from other device and hence signed out here");
             SampleAPI.forceLogout();
         } else if (Mesibo.STATUS_AUTHFAIL == status) {
+            UIManager.showAlert(mUserListContext, "Signed Out", "Login Expired. Login again to continue.");
             SampleAPI.forceLogout();
         }
 
@@ -246,21 +249,23 @@ public class MesiboListeners implements Mesibo.ConnectionListener, ILoginInterfa
     @Override
     public int Mesibo_onGetMenuResourceId(Context context, int type, Mesibo.MessageParams params, Menu menu) {
         int id = 0;
-        if (type == 0) // Setting menu in userlist
+        if (type == 0) { // Setting menu in userlist
             id = R.menu.messaging_activity_menu;
-        else // from User chatbox
+            mUserListContext = context;
+        }
+        else {
             id = R.menu.menu_messaging;
+            mMessageContext = context;
+        }
 
         ((Activity)context).getMenuInflater().inflate(id, menu);
 
         if(1 == type && null != params && params.groupid > 0) {
             MenuItem menuItem = menu.findItem(R.id.action_call);
-            menuItem.setVisible(false);
-            MenuItemCompat.setShowAsAction(menuItem, MenuItemCompat.SHOW_AS_ACTION_NEVER);
+            menuItem.setIcon(R.drawable.ic_mesibo_groupcall_audio);
 
             menuItem = menu.findItem(R.id.action_videocall);
-            menuItem.setVisible(false);
-            MenuItemCompat.setShowAsAction(menuItem, MenuItemCompat.SHOW_AS_ACTION_NEVER);
+            menuItem.setIcon(R.drawable.ic_mesibo_groupcall_video);
         }
 
         return 0;
@@ -289,6 +294,12 @@ public class MesiboListeners implements Mesibo.ConnectionListener, ILoginInterfa
             else if(R.id.action_videocall == item && 0 == params.groupid) {
                 if(!MesiboCall.getInstance().callUi(context, params.profile.address, true))
                     MesiboCall.getInstance().callUiForExistingCall(context);
+            }
+            else if(R.id.action_call == item && params.groupid > 0) {
+                MesiboCall.getInstance().groupCallUi(context, Mesibo.getProfile(params.groupid), false, true);
+            }
+            else if(R.id.action_videocall == item && params.groupid > 0) {
+                MesiboCall.getInstance().groupCallUi(context, Mesibo.getProfile(params.groupid), true, true);
             }
         }
 
