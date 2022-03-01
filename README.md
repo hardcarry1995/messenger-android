@@ -1,9 +1,13 @@
 ## Mesibo Messenger for Android
 Mesibo Messenger is an open-source app with real-time messaging, voice and video call features. This repo contains the source code for Mesibo Messenger App for Android. The GitHub repository for iOS version is [here](https://github.com/mesibo/messenger-app-ios).
 
+![messenger](https://mesibo.com/assets/images/phone-img6.png)
+
+
 ### Features
 - One-on-one messaging and Group chat
 - High quality voice and video calling
+- Video and Voice Conferencing
 - Rich messaging (text, picture, video, audio, other files)
 - Encryption 
 - Location sharing
