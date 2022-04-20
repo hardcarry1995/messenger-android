@@ -98,7 +98,7 @@ public class ShowProfileFragment extends Fragment implements Mesibo.MessageListe
     private ImageView mMessageBtn;
     private CardView mMediaCardView;
     private CardView mStatusPhoneCard;
-    private CardView mGroupMemebersCard;
+    private CardView mGroupMembersCard;
     private CardView mExitGroupCard;
     private TextView mExitGroupText;
     private static int VIDEO_FILE = 2;
@@ -112,8 +112,6 @@ public class ShowProfileFragment extends Fragment implements Mesibo.MessageListe
     LinearLayout mAddMemebers, mEditGroup;
     ArrayList<MesiboGroupProfile.Member> mGroupMemberList = new ArrayList<>();
     MesiboGroupProfile.Member mSelfMember;
-
-    ProgressDialog mProgressDialog;
 
     LinearLayout mll ;
     TextView mStatus ;
@@ -203,27 +201,87 @@ public class ShowProfileFragment extends Fragment implements Mesibo.MessageListe
         mMediaCounterView.setText(String.valueOf(mMediaFilesCounter)+"\u3009 ");
 
         mStatusPhoneCard = (CardView) v.findViewById(R.id.status_phone_card) ;
-        mGroupMemebersCard = (CardView) v.findViewById(R.id.showprofile_members_card) ;
+        mGroupMembersCard = (CardView) v.findViewById(R.id.showprofile_members_card) ;
         mExitGroupCard = (CardView) v.findViewById(R.id.group_exit_card);
         mExitGroupText = (TextView) v.findViewById(R.id.group_exit_text);
         mExitGroupCard.setVisibility(GONE);
         mExitGroupCard.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                mUser.getGroupProfile().remove();
+                if(mSelfMember.isOwner())
+                    mUser.getGroupProfile().deleteGroup();
+                else
+                    mUser.getGroupProfile().leave();
+
                 getActivity().finish();
             }
         });
 
-        SwitchCompat switchCompat = (SwitchCompat)v.findViewById(R.id.up_mute_switch);
-        switchCompat.setChecked(mUser.isMuted());
+        CardView e2ecard = (CardView) v.findViewById(R.id.e2ee_card);
+        e2ecard.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                MesiboUI.showEndToEndEncryptionInfo(getActivity(), mUser.getAddress(), mUser.getGroupId());
+            }
+        });
+
+        SwitchCompat switchCompat = (SwitchCompat)v.findViewById(R.id.block_m_switch);
+        switchCompat.setChecked(mUser.isMessageBlocked());
         switchCompat.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                mUser.toggleMute();
+                mUser.blockMessages(isChecked);
                 mUser.save();
             }
         });
+
+        SwitchCompat blockGroupSwitch = (SwitchCompat)v.findViewById(R.id.block_g_switch);
+        blockGroupSwitch.setChecked(mUser.isGroupMessageBlocked());
+        blockGroupSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                mUser.blockGroupMessages(isChecked);
+                mUser.save();
+            }
+        });
+
+        SwitchCompat blockVideoCallSwitch = (SwitchCompat)v.findViewById(R.id.block_v_switch);
+        blockVideoCallSwitch.setChecked(mUser.isVideoCallBlocked());
+        blockVideoCallSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                mUser.blockVideoCalls(isChecked);
+                mUser.save();
+            }
+        });
+
+        SwitchCompat blockCallSwitch = (SwitchCompat)v.findViewById(R.id.block_c_switch);
+        blockCallSwitch.setChecked(mUser.isCallBlocked());
+        blockCallSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                // if calls are blocked, video calls are blcoked too amd hence switch has no meaning
+                v.findViewById(R.id.block_v_layout).setVisibility(isChecked?GONE:VISIBLE);
+                mUser.blockCalls(isChecked);
+                mUser.save();
+            }
+        });
+
+        SwitchCompat blockProfileSwitch = (SwitchCompat)v.findViewById(R.id.block_p_switch);
+        blockProfileSwitch.setChecked(mUser.isProfileSubscriptionBlocked());
+        blockProfileSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                if(!isChecked) mUser.subscribe(true);
+                mUser.blockProfileSubscription(isChecked);
+                mUser.save();
+            }
+        });
+
+
+        if(mUser.isGroup()) {
+            v.findViewById(R.id.block_layout).setVisibility(GONE);
+        }
 
         LinearLayout linearLayout = (LinearLayout) v.findViewById(R.id.up_open_media);
         linearLayout.setOnClickListener(new View.OnClickListener() {
@@ -369,6 +427,7 @@ public class ShowProfileFragment extends Fragment implements Mesibo.MessageListe
     }
 
     public boolean parseGroupMembers(MesiboGroupProfile.Member[] users) {
+        if(null == users) return false;
 
         String phone = SampleAPI.getPhone();
         if(TextUtils.isEmpty(phone))
@@ -385,11 +444,19 @@ public class ShowProfileFragment extends Fragment implements Mesibo.MessageListe
             mGroupMemberList.add(users[i]);
         }
 
+        if(null == mSelfMember) {
+            mExitGroupText.setVisibility(GONE);
+            mAddMemebers.setVisibility(GONE);
+            mEditGroup.setVisibility(GONE);
+            mAdapter.notifyDataSetChanged();
+            return true;
+        }
+
         //only owner can delete group
         mExitGroupText.setText(mSelfMember.isOwner() ? "Delete Group" : "Exit Group");
 
         if(mUser.groupid > 0) {
-            mAddMemebers.setVisibility(mSelfMember.isAdmin() ? VISIBLE : GONE);
+            mAddMemebers.setVisibility(mSelfMember.isAdmin() && mUser.isActive() ? VISIBLE : GONE);
             mEditGroup.setVisibility(mUser.getGroupProfile().canModify() ? VISIBLE : GONE);
         }
 
@@ -460,11 +527,18 @@ public class ShowProfileFragment extends Fragment implements Mesibo.MessageListe
     }
 
     @Override
+    public void MesiboProfile_onEndToEndEncryption(MesiboProfile mesiboProfile, int i) {
+
+    }
+
+    @Override
     public void onResume  () {
         super.onResume();
-        if(mUser.groupid > 0 && !mUser.isDeleted()){
-            mExitGroupCard.setVisibility(VISIBLE);
-            mGroupMemebersCard.setVisibility(VISIBLE);
+        if(mUser.groupid > 0){
+            boolean isActive = mUser.isActive();
+            mExitGroupCard.setVisibility(isActive?VISIBLE:GONE);
+            mAddMemebers.setVisibility(isActive?VISIBLE:GONE);
+            mGroupMembersCard.setVisibility(VISIBLE);
             mStatusPhoneCard.setVisibility(GONE);
             mAddMemebers.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -491,7 +565,7 @@ public class ShowProfileFragment extends Fragment implements Mesibo.MessageListe
 
         } else {
             mExitGroupCard.setVisibility(GONE);
-            mGroupMemebersCard.setVisibility(GONE);
+            mGroupMembersCard.setVisibility(GONE);
             mStatusPhoneCard.setVisibility(VISIBLE);
 
             if(TextUtils.isEmpty(mUser.getStatus())) {
@@ -574,10 +648,12 @@ public class ShowProfileFragment extends Fragment implements Mesibo.MessageListe
                 holder.mAdminTextView.setVisibility(GONE);
             }
 
+            String status =  user.getStatus();
             if(TextUtils.isEmpty(user.getStatus())) {
-                user.setStatus("");
+                status = "";
             }
-            holder.mContactsStatus.setText(user.getStatus());
+
+            holder.mContactsStatus.setText(status);
 
             // only admin can have menu, also owner can't be deleted
 

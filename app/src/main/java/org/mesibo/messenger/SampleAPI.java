@@ -259,6 +259,14 @@ public class SampleAPI  {
         return  ContactUtils.reverseLookup(phone);
     }
 
+    public static void updateDeletedGroup(long gid) {
+        if(0 == gid) return;
+        MesiboProfile u = Mesibo.getProfile(gid);
+        if(null == u) return;
+        //u.flag |= MesiboProfile.FLAG_DELETED;
+        u.setStatus("Not a group member"); // can be better handle dynamically
+        u.save();
+    }
 
     private static boolean parseResponse(Response response, Context context, boolean uiThread) {
 
@@ -296,6 +304,10 @@ public class SampleAPI  {
             if(null != response.share) {
                 AppConfig.getConfig().invite = response.share;
                 save = true;
+            }
+
+            if(!TextUtils.isEmpty(response.message)) {
+                UIManager.showAlert(context, response.title, response.message);
             }
 
             if(response.op.equals("login") && !TextUtils.isEmpty(response.token)) {
@@ -453,7 +465,10 @@ public class SampleAPI  {
         }
 
         initAutoDownload();
+        Mesibo.enableGalleryScanForMedia(true);
+        Mesibo.setSecureScreen(true);
 
+        Mesibo.e2ee().enable(true);
         // Now start mesibo
         if(0 != Mesibo.start()) {
             return false;

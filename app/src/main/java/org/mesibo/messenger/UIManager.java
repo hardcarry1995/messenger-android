@@ -212,6 +212,7 @@ public class UIManager {
     }
 
     public static void showAlert(Context context, String title, String message) {
+        if(null == context) return;
         showAlert(context, title, message, null, null);
     }
 

@@ -18,6 +18,16 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <item
+        android:id="@+id/action_conf"
+        android:title="@string/menu_conf"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/action_menu_e2ee"
+        android:title="End-To-End Encryption"
+        app:showAsAction="never" />
+
+    <item
         android:id="@+id/action_calllogs"
         android:title="@string/menu_calllogs"
         app:showAsAction="never" />

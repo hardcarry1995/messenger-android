@@ -17,7 +17,7 @@
             android:layout_height="match_parent"
             android:orientation="vertical"
             android:paddingTop="@dimen/card_margin"
-
+            android:background="@color/white"
 
             >
             <android.support.v7.widget.CardView
@@ -94,12 +94,47 @@
 
             </android.support.v7.widget.CardView>
 
+            <android.support.v7.widget.CardView
+                android:id="@+id/e2ee_card"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minHeight="50dp"
+                android:layout_marginBottom="@dimen/card_margin"
+                >
+
+                <LinearLayout
+                    android:layout_marginTop="10dp"
+                    android:layout_marginBottom="10dp"
+                    android:orientation="vertical"
+                    android:layout_marginLeft="@dimen/card_left_margin"
+                    android:layout_marginRight="@dimen/card_right_margin"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="End-To-End Encryption"
+                        android:layout_gravity="left"
+                        android:textColor="@color/md_green_900"
+                        android:textSize="18sp"
+                        android:gravity="left"
+                        android:background="@color/white"
+
+
+                        />
+
+                </LinearLayout>
+
+            </android.support.v7.widget.CardView>
 
             <android.support.v7.widget.CardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="10dp"
                 android:layout_marginBottom="10dp"
+                android:background="@color/white"
                 >
 
                 <LinearLayout
@@ -108,31 +143,59 @@
                     android:orientation="vertical"
                     android:layout_marginLeft="@dimen/card_left_margin"
                     android:layout_marginRight="@dimen/card_right_margin"
-
+                    android:background="@color/white"
 
                     >
 
 
                     <LinearLayout
+                    android:id="@+id/block_layout"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginBottom="10dp"
                         android:layout_marginTop="10dp"
+                    android:orientation="vertical"
+                    android:background="@color/white"
                         >
 
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="Mute"
+                        	android:text="Blocking"
                             android:textSize="18sp"
                             android:textColor="@color/md_green_900"
                             android:layout_weight="1"
 
                             />
 
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:background="@color/md_grey_300"
+                        android:layout_marginTop="5dp"
+                        android:layout_marginBottom="5dp"
+                        >
+                    </View>
+
+                <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        >
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="Messages"
+                            android:textSize="18sp"
+                            android:textColor="@color/md_grey_600"
+                            android:layout_weight="1"
+
+                            />
+
 
                         <android.support.v7.widget.SwitchCompat
-                            android:id="@+id/up_mute_switch"
+                            android:id="@+id/block_m_switch"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:checked="true"
@@ -144,6 +207,130 @@
                             android:focusableInTouchMode="false"/>
 
                     </LinearLayout>
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        >
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="Group Messages"
+                            android:textSize="18sp"
+                            android:textColor="@color/md_grey_600"
+                            android:layout_weight="1"
+
+                            />
+
+
+                        <android.support.v7.widget.SwitchCompat
+                            android:id="@+id/block_g_switch"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:checked="true"
+                            android:textOff="OFF"
+                            android:textOn="ON"
+                            app:showText="false"
+                            android:focusable="false"
+                            android:layout_weight="1"
+                            android:focusableInTouchMode="false"/>
+
+                    </LinearLayout>
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        >
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="Calls"
+                            android:textSize="18sp"
+                            android:textColor="@color/md_grey_600"
+                            android:layout_weight="1"
+
+                            />
+
+
+                        <android.support.v7.widget.SwitchCompat
+                            android:id="@+id/block_c_switch"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:checked="true"
+                            android:textOff="OFF"
+                            android:textOn="ON"
+                            app:showText="false"
+                            android:focusable="false"
+                            android:layout_weight="1"
+                            android:focusableInTouchMode="false"/>
+
+                    </LinearLayout>
+                    <LinearLayout
+                        android:id="@+id/block_v_layout"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        >
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="Video Calls"
+                            android:textSize="18sp"
+                            android:textColor="@color/md_grey_600"
+                            android:layout_weight="1"
+
+                            />
+
+
+                        <android.support.v7.widget.SwitchCompat
+                            android:id="@+id/block_v_switch"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:checked="true"
+                            android:textOff="OFF"
+                            android:textOn="ON"
+                            app:showText="false"
+                            android:focusable="false"
+                            android:layout_weight="1"
+                            android:focusableInTouchMode="false"/>
+
+                    </LinearLayout>
+                    <LinearLayout
+                        android:id="@+id/block_p_layout"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        >
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="Profile View"
+                            android:textSize="18sp"
+                            android:textColor="@color/md_grey_600"
+                            android:layout_weight="1"
+
+                            />
+
+
+                        <android.support.v7.widget.SwitchCompat
+                            android:id="@+id/block_p_switch"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:checked="true"
+                            android:textOff="OFF"
+                            android:textOn="ON"
+                            app:showText="false"
+                            android:focusable="false"
+                            android:layout_weight="1"
+                            android:focusableInTouchMode="false"/>
+
+                    </LinearLayout>
+
+                </LinearLayout>
 
                     <View
                         android:layout_width="match_parent"
@@ -219,6 +406,7 @@
                         android:textColor="@color/md_green_900"
                         android:textSize="18sp"
                         android:gravity="left"
+                        android:background="@color/white"
 
 
                         />
@@ -240,6 +428,7 @@
                         android:layout_marginBottom="10dp"
                         android:layout_marginTop="10dp"
                         android:visibility="visible"
+                        android:background="@color/white"
 
                         >
 
@@ -367,7 +556,7 @@
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="Members of group"
+                            android:text="Group Members"
                             android:layout_gravity="left"
                             android:textColor="@color/md_green_900"
                             android:textSize="18sp"

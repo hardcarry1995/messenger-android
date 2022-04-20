@@ -11,6 +11,7 @@
             android:summary="Auto download media files while on cellular data. Auto download is always enabled for WiFi."
             android:key="auto"
             android:defaultValue="true"
+            android:textColor="@color/black"
             ></android.support.v7.preference.SwitchPreferenceCompat>
 
     </PreferenceCategory>

@@ -218,8 +218,10 @@ public class ShowProfileActivity extends AppCompatActivity implements ShowProfil
                 setUserPicture();
             }
         });
+    }
 
-
+    @Override
+    public void MesiboProfile_onEndToEndEncryption(MesiboProfile mesiboProfile, int i) {
 
     }
 
