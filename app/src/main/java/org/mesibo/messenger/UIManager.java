@@ -45,14 +45,8 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.os.Build;
 import android.os.Bundle;
-import android.support.v7.app.AppCompatActivity;
-import android.view.Gravity;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.widget.PopupWindow;
-import android.view.ViewGroup.LayoutParams;
+import androidx.appcompat.app.AppCompatActivity;
 
 import com.mesibo.mediapicker.AlbumListData;
 import com.mesibo.mediapicker.MediaPicker;
@@ -62,15 +56,12 @@ import com.mesibo.uihelper.ILoginInterface;
 import com.mesibo.uihelper.IProductTourListener;
 import com.mesibo.uihelper.MesiboUiHelper;
 import com.mesibo.uihelper.MesiboUiHelperConfig;
-import com.mesibo.uihelper.OtpView;
 import com.mesibo.uihelper.WelcomeScreen;
 import com.mesibo.messaging.MesiboUI;
 
 
 import java.util.ArrayList;
 import java.util.List;
-
-import static android.content.Context.LAYOUT_INFLATER_SERVICE;
 
 public class UIManager {
 
@@ -197,7 +188,7 @@ public class UIManager {
         if(null == context) {
             return; //
         }
-        android.support.v7.app.AlertDialog.Builder dialog = new android.support.v7.app.AlertDialog.Builder(context);
+        androidx.appcompat.app.AlertDialog.Builder dialog = new androidx.appcompat.app.AlertDialog.Builder(context);
         dialog.setTitle(title);
         dialog.setMessage(message);
         dialog.setCancelable(true);

@@ -47,13 +47,13 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
-import android.support.design.widget.AppBarLayout;
-import android.support.design.widget.CollapsingToolbarLayout;
-import android.support.design.widget.CoordinatorLayout;
-import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentTransaction;
-import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
+import com.google.android.material.appbar.AppBarLayout;
+import com.google.android.material.appbar.CollapsingToolbarLayout;
+import androidx.coordinatorlayout.widget.CoordinatorLayout;
+import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentTransaction;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 import android.view.Menu;
 import android.view.View;
 import android.view.animation.AlphaAnimation;
@@ -116,34 +116,32 @@ public class ShowProfileActivity extends AppCompatActivity implements ShowProfil
         TextView userstatus = (TextView) findViewById(R.id.up_current_status);
 
         userName.setText(mUserProfile.getName());
-        long lastSeen = Mesibo.getTimestamp() - mUserProfile.lastActiveTime;
+        long lastSeen = mUserProfile.getLastSeen();
         userstatus.setVisibility(View.VISIBLE);
-        if(lastSeen <= 60000) {
+        if(0 == lastSeen) {
             userstatus.setText("Online");
+        }
+        else if(lastSeen < 0) {
+            // never seen or group
+            userstatus.setVisibility(View.GONE);
         }
         else {
             String seenStatus = "";
-            lastSeen = lastSeen/60000; //miutes
-            if(mUserProfile.groupid > 0 || 0 == mUserProfile.lastActiveTime) {
-                userstatus.setVisibility(View.GONE);
-            }
-            else if(lastSeen >= 2*24*60) {
-                seenStatus = (int)(lastSeen/(24*60)) + " days ago";
-            } else if(lastSeen >= 24*60) {
+            if(lastSeen >= 2*3600*24) {
+                seenStatus = (int)(lastSeen/(3600*24)) + " days ago";
+            } else if(lastSeen >= 24*3600) {
                 seenStatus = "yesterday";
-            } else if(lastSeen >= 120 ){
-                seenStatus = (int)(lastSeen/(60)) + " hours ago";
-            } else if(lastSeen >= 60) {
+            } else if(lastSeen >= 2*3600 ){
+                seenStatus = (int)(lastSeen/(3600)) + " hours ago";
+            } else if(lastSeen >= 3600) {
                 seenStatus = "an hour ago";
-            } else if(lastSeen >= 2) {
-                seenStatus = lastSeen + " minutes ago";
+            } else if(lastSeen >= 120) {
+                seenStatus = (int)(lastSeen/60) + " minutes ago";
             } else {
-                seenStatus = "a few moments before";
+                seenStatus = "a few moments ago";
             }
 
             userstatus.setText("Last seen " + seenStatus);
-
-            //userstatus.setVisibility(View.GONE);
         }
 
         CollapsingToolbarLayout collapsingToolbar =

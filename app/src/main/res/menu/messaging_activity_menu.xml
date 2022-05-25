@@ -39,7 +39,7 @@
 
     <item
         android:id="@id/mesibo_search"
-        app:actionViewClass="android.support.v7.widget.SearchView"
+        app:actionViewClass="androidx.appcompat.widget.SearchView"
         app:showAsAction="always"
         android:icon="@android:drawable/ic_menu_search"
         android:title="Search" />

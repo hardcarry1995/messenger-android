@@ -41,7 +41,7 @@
 package org.mesibo.messenger;
 
 import android.app.Application;
-import android.arch.lifecycle.LifecycleObserver;
+import androidx.lifecycle.LifecycleObserver;
 import android.content.Context;
 import android.util.Log;
 

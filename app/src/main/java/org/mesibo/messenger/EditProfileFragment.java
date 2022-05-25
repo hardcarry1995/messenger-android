@@ -42,20 +42,17 @@ package org.mesibo.messenger;
 
 
 import android.Manifest;
-import android.app.ProgressDialog;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
-import android.support.v4.app.Fragment;
-import android.support.v7.app.ActionBar;
-import android.support.v7.app.AlertDialog;
-import android.support.v7.app.AppCompatActivity;
-import android.support.v7.view.menu.MenuBuilder;
-import android.support.v7.view.menu.MenuPopupHelper;
+import androidx.fragment.app.Fragment;
+import androidx.appcompat.app.ActionBar;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.view.menu.MenuBuilder;
+import androidx.appcompat.view.menu.MenuPopupHelper;
 import android.text.Editable;
 import android.text.InputFilter;
 import android.text.TextUtils;
@@ -76,7 +73,6 @@ import android.widget.TextView;
 
 import com.mesibo.api.Mesibo;
 import com.mesibo.api.MesiboProfile;
-import com.mesibo.api.MesiboSelfProfile;
 import com.mesibo.emojiview.EmojiconEditText;
 import com.mesibo.emojiview.EmojiconGridView;
 import com.mesibo.emojiview.EmojiconsPopup;
@@ -86,15 +82,9 @@ import com.mesibo.messaging.RoundImageDrawable;
 
 import org.mesibo.messenger.Utils.AppUtils;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-
 import static android.app.Activity.RESULT_OK;
-import static android.content.ContentValues.TAG;
 
-public class EditProfileFragment extends android.support.v4.app.Fragment implements MediaPicker.ImageEditorListener, MesiboProfile.Listener
+public class EditProfileFragment extends Fragment implements MediaPicker.ImageEditorListener, MesiboProfile.Listener
 {
     public  View mView=null;
     //private RoundedImageView mProfileImage;

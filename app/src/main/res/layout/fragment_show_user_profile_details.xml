@@ -6,7 +6,7 @@
     tools:context=".ShowProfileFragment">
 
     <!-- TODO: Update blank fragment layout -->
-    <android.support.v4.widget.NestedScrollView
+    <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         app:layout_behavior="@string/appbar_scrolling_view_behavior">
@@ -20,7 +20,7 @@
             android:background="@color/white"
 
             >
-            <android.support.v7.widget.CardView
+            <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:minHeight="50dp"
@@ -92,9 +92,9 @@
                     </HorizontalScrollView>
                 </LinearLayout>
 
-            </android.support.v7.widget.CardView>
+            </androidx.cardview.widget.CardView>
 
-            <android.support.v7.widget.CardView
+            <androidx.cardview.widget.CardView
                 android:id="@+id/e2ee_card"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -127,9 +127,9 @@
 
                 </LinearLayout>
 
-            </android.support.v7.widget.CardView>
+            </androidx.cardview.widget.CardView>
 
-            <android.support.v7.widget.CardView
+            <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="10dp"
@@ -194,7 +194,7 @@
                             />
 
 
-                        <android.support.v7.widget.SwitchCompat
+                        <androidx.appcompat.widget.SwitchCompat
                             android:id="@+id/block_m_switch"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
@@ -224,7 +224,7 @@
                             />
 
 
-                        <android.support.v7.widget.SwitchCompat
+                        <androidx.appcompat.widget.SwitchCompat
                             android:id="@+id/block_g_switch"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
@@ -254,7 +254,7 @@
                             />
 
 
-                        <android.support.v7.widget.SwitchCompat
+                        <androidx.appcompat.widget.SwitchCompat
                             android:id="@+id/block_c_switch"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
@@ -285,7 +285,7 @@
                             />
 
 
-                        <android.support.v7.widget.SwitchCompat
+                        <androidx.appcompat.widget.SwitchCompat
                             android:id="@+id/block_v_switch"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
@@ -316,7 +316,7 @@
                             />
 
 
-                        <android.support.v7.widget.SwitchCompat
+                        <androidx.appcompat.widget.SwitchCompat
                             android:id="@+id/block_p_switch"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
@@ -377,10 +377,10 @@
                 </LinearLayout>
 
 
-            </android.support.v7.widget.CardView>
+            </androidx.cardview.widget.CardView>
 
 
-            <android.support.v7.widget.CardView
+            <androidx.cardview.widget.CardView
                 android:id="@+id/status_phone_card"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -527,8 +527,8 @@
                     </LinearLayout>
                 </LinearLayout>
 
-            </android.support.v7.widget.CardView>
-            <android.support.v7.widget.CardView
+            </androidx.cardview.widget.CardView>
+            <androidx.cardview.widget.CardView
                 android:id="@+id/showprofile_members_card"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -644,18 +644,18 @@
                         >
                     </View>
 
-                    <android.support.v7.widget.RecyclerView
+                    <androidx.recyclerview.widget.RecyclerView
                         android:id="@+id/showprofile_memebers_rview"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:background="@color/md_white_1000"
                         >
-                    </android.support.v7.widget.RecyclerView>
+                    </androidx.recyclerview.widget.RecyclerView>
                 </LinearLayout>
 
-            </android.support.v7.widget.CardView>
+            </androidx.cardview.widget.CardView>
 
-            <android.support.v7.widget.CardView
+            <androidx.cardview.widget.CardView
                 android:id="@+id/group_exit_card"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -690,11 +690,11 @@
 
                 </LinearLayout>
 
-            </android.support.v7.widget.CardView>
+            </androidx.cardview.widget.CardView>
 
 
         </LinearLayout>
 
-    </android.support.v4.widget.NestedScrollView>
+    </androidx.core.widget.NestedScrollView>
 
 </FrameLayout>

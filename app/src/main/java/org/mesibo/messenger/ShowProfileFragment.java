@@ -40,19 +40,18 @@
 
 package org.mesibo.messenger;
 
-import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
-import android.support.v4.app.Fragment;
-import android.support.v7.app.AlertDialog;
-import android.support.v7.widget.CardView;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
-import android.support.v7.widget.SwitchCompat;
+import androidx.fragment.app.Fragment;
+import androidx.appcompat.app.AlertDialog;
+import androidx.cardview.widget.CardView;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+import androidx.appcompat.widget.SwitchCompat;
 import android.text.TextUtils;
 import android.util.DisplayMetrics;
 import android.view.LayoutInflater;
@@ -77,8 +76,6 @@ import com.mesibo.mediapicker.AlbumListData;
 import com.mesibo.mediapicker.AlbumPhotosData;
 import com.mesibo.messaging.MesiboUI;
 import com.mesibo.messaging.RoundImageDrawable;
-
-import org.mesibo.messenger.Utils.AppUtils;
 
 import static android.view.View.GONE;
 import static android.view.View.VISIBLE;
