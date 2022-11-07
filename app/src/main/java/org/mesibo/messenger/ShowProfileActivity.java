@@ -62,7 +62,7 @@ import android.widget.TextView;
 import com.mesibo.api.Mesibo;
 import com.mesibo.api.MesiboProfile;
 
-public class ShowProfileActivity extends AppCompatActivity implements ShowProfileFragment.OnFragmentInteractionListener, Mesibo.FileTransferListener, MesiboProfile.Listener {
+public class ShowProfileActivity extends AppCompatActivity implements ShowProfileFragment.OnFragmentInteractionListener, MesiboProfile.Listener {
 
     SquareImageView mUsermageView;
     MesiboProfile mUserProfile;
@@ -221,15 +221,6 @@ public class ShowProfileActivity extends AppCompatActivity implements ShowProfil
     @Override
     public void MesiboProfile_onEndToEndEncryption(MesiboProfile mesiboProfile, int i) {
 
-    }
-
-    @Override
-    public boolean Mesibo_onFileTransferProgress(Mesibo.FileInfo file) {
-
-        if(100 == file.getProgress())
-            setUserPicture();
-
-        return true;
     }
 
     @Override

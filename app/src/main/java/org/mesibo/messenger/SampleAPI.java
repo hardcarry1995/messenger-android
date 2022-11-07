@@ -49,11 +49,15 @@ import android.text.TextUtils;
 
 import com.google.gson.Gson;
 import com.mesibo.api.Mesibo;
+import com.mesibo.api.MesiboHttp;
+import com.mesibo.api.MesiboMessage;
+import com.mesibo.api.MesiboMessageProperties;
 import com.mesibo.api.MesiboProfile;
 import com.mesibo.calls.api.MesiboCall;
 import com.mesibo.contactutils.ContactUtils;
 import com.mesibo.mediapicker.MediaPicker;
 import org.mesibo.messenger.fcm.MesiboRegistrationIntentService;
+import com.mesibo.messaging.MesiboUI;
 
 import org.json.JSONObject;
 
@@ -72,8 +76,8 @@ public class SampleAPI  {
     public final static String KEY_AUTODOWNLOAD = "autodownload";
     public final static String KEY_GCMTOKEN = "gcmtoken";
 
-    public static abstract class ResponseHandler implements Mesibo.HttpListener {
-        private Mesibo.Http http = null;
+    public static abstract class ResponseHandler implements MesiboHttp.Listener {
+        private MesiboHttp http = null;
         private Bundle mRequest = null;
         private boolean mBlocking = false;
         private boolean mOnUiThread = false;
@@ -81,13 +85,13 @@ public class SampleAPI  {
         public Context mContext = null;
 
         @Override
-        public boolean Mesibo_onHttpProgress(Mesibo.Http http, int state, int percent) {
+        public boolean Mesibo_onHttpProgress(MesiboHttp http, int state, int percent) {
             if(percent < 0) {
                 HandleAPIResponse(null);
                 return true;
             }
 
-            if(100 == percent && Mesibo.Http.STATE_DOWNLOAD == state) {
+            if(100 == percent && MesiboHttp.STATE_DOWNLOAD == state) {
                 String strResponse = http.getDataString();
                 Response response = null;
 
@@ -145,7 +149,7 @@ public class SampleAPI  {
 
             }
 
-            http = new Mesibo.Http();
+            http = new MesiboHttp();
             http.url = mApiUrl;
             try {
                 http.post = j.toString().getBytes();
@@ -334,13 +338,11 @@ public class SampleAPI  {
         return true;
     }
 
-
     public static void showConnectionError(Context context) {
         String title = "No Internet Connection";
         String message = "Your phone is not connected to the internet. Please check your internet connection and try again later.";
         UIManager.showAlert(context, title, message);
     }
-
 
     public static void saveLocalSyncedContacts(String contacts, long timestamp) {
         Mesibo.setKey(SampleAPI.KEY_SYNCEDCONTACTS, contacts);
@@ -359,7 +361,6 @@ public class SampleAPI  {
 
         Mesibo.initCrashHandler(MesiboListeners.getInstance());
         Mesibo.uploadCrashLogs();
-        Mesibo.setSecureConnection(true);
 
         if(!TextUtils.isEmpty(AppConfig.getConfig().token)) {
             if(startMesibo(false))
@@ -439,6 +440,7 @@ public class SampleAPI  {
 
         // add lister
         Mesibo.addListener(MesiboListeners.getInstance());
+        MesiboUI.setListener(MesiboListeners.getInstance());
         MesiboCall.getInstance().setListener(MesiboListeners.getInstance());
 
         // add file transfer handler
@@ -560,13 +562,14 @@ public class SampleAPI  {
         mNotifyUser.sendNotification(id, title, message);
     }
 
-    public static void notify(Mesibo.MessageParams params, String message) {
+    public static void notify(MesiboMessage params, String message) {
         // if call is in progress, we must give notification even if reading because user is in call
         // screen
         if(!MesiboCall.getInstance().isCallInProgress() && Mesibo.isReading(params))
             return;
 
-        if(Mesibo.ORIGIN_REALTIME != params.origin || Mesibo.MSGSTATUS_OUTBOX == params.getStatus())
+        // TBD, create read session for unread messages in database
+        if(!params.isRealtimeMessage() || Mesibo.MSGSTATUS_OUTBOX == params.getStatus())
             return;
 
         //MUST not happen for realtime message
@@ -597,7 +600,7 @@ public class SampleAPI  {
 
         if(params.isMissedCall()) {
                 String subject = "Mesibo Missed Call";
-                message = "You missed a mesibo " + (params.isVideoCall()?"video ":"") + "call from " + profile.getName();
+                message = "You missed a mesibo " + (params.isVideoCall()?"video ":"") + "call from " + profile.getNameOrAddress("+");
                 SampleAPI.notify(2, subject, message);
                 return;
         }

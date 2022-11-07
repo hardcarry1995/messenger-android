@@ -162,11 +162,9 @@ public class BasicSettingsFragment extends Fragment {
     public void onResume() {
         super.onResume();
         mUser = Mesibo.getSelfProfile();
-        String imagePath = mUser.getImagePath();
-        if(null != imagePath) {
-            Bitmap b = BitmapFactory.decodeFile(imagePath);
-            if(null != b)
-                mUserImage.setImageDrawable(new RoundImageDrawable(b));
+        Bitmap image = mUser.getImageOrThumbnail();
+        if(null != image) {
+            mUserImage.setImageDrawable(new RoundImageDrawable(image));
         }
 
         mUserName.setText(mUser.getName());

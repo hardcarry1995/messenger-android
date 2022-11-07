@@ -55,6 +55,7 @@ import android.view.View;
 import com.google.gson.Gson;
 
 import com.mesibo.api.MesiboGroupProfile;
+import com.mesibo.api.MesiboMessage;
 import com.mesibo.api.MesiboProfile;
 import com.mesibo.calls.api.MesiboCall;
 import com.mesibo.calls.ui.MesiboCallUi;
@@ -72,7 +73,7 @@ import com.mesibo.uihelper.ILoginResultsInterface;
 import java.util.ArrayList;
 import static org.webrtc.ContextUtils.getApplicationContext;
 
-public class MesiboListeners implements Mesibo.ConnectionListener, ILoginInterface, IProductTourListener, Mesibo.MessageListener, Mesibo.UIHelperListner, ContactUtils.ContactsListener, Mesibo.MessageFilter, Mesibo.ProfileListener, Mesibo.CrashListener, MesiboRegistrationIntentService.GCMListener, MesiboCall.IncomingListener, Mesibo.GroupListener, Mesibo.AppStateListener, Mesibo.EndToEndEncryptionListener {
+public class MesiboListeners implements Mesibo.ConnectionListener, ILoginInterface, IProductTourListener, Mesibo.MessageListener, MesiboUI.Listener, ContactUtils.ContactsListener, Mesibo.MessageFilter, Mesibo.ProfileListener, Mesibo.CrashListener, MesiboRegistrationIntentService.GCMListener, MesiboCall.IncomingListener, Mesibo.GroupListener, Mesibo.AppStateListener, Mesibo.EndToEndEncryptionListener {
     public static final String TAG = "MesiboListeners";
     public static Context mLoginContext = null;
     private static Gson mGson = new Gson();
@@ -151,7 +152,7 @@ public class MesiboListeners implements Mesibo.ConnectionListener, ILoginInterfa
 
     @Override
     public void Mesibo_onConnectionStatus(int status) {
-        Log.d(TAG, "on Mesibo Connection: " + status);
+        Log.d(TAG, "Mesibo_onConnectionStatus: " + status);
         if (Mesibo.STATUS_SIGNOUT == status) {
             UIManager.showAlert(mUserListContext, "Signed Out", "You have signed-in from other device and hence signed out here");
             SampleAPI.forceLogout();
@@ -171,39 +172,43 @@ public class MesiboListeners implements Mesibo.ConnectionListener, ILoginInterfa
     }
 
     @Override
-    public boolean Mesibo_onMessage(Mesibo.MessageParams params, byte[] data) {
-        if(Mesibo.ORIGIN_REALTIME != params.origin || Mesibo.MSGSTATUS_OUTBOX == params.getStatus())
-            return true;
+    public void Mesibo_onMessage(MesiboMessage msg) {
+        if(!msg.isRealtimeMessage() || Mesibo.MSGSTATUS_OUTBOX == msg.getStatus())
+            return;
 
-        if(Mesibo.isReading(params))
-            return true;
+        if(msg.isEndToEndEncryptionStatus())
+            return;
 
-        String message = "";
-        try {
-            message = new String(data, "UTF-8");
-        } catch (Exception e) {
-            return false;
-        }
-        SampleAPI.notify(params, message);
-        return true;
+        // if(Mesibo.isAppInForeground()) return true;
+
+        if(Mesibo.isReading(msg))
+            return;
+
+        String message = msg.message;
+        if(TextUtils.isEmpty(message))
+            message = msg.title;
+        if(TextUtils.isEmpty(message) && msg.hasImage())
+            message = "Picture";
+        if(TextUtils.isEmpty(message) && msg.hasVideo())
+            message = "Video";
+        if(TextUtils.isEmpty(message) && msg.hasAudio())
+            message = "Audio";
+        if(TextUtils.isEmpty(message) && msg.hasDocument())
+            message = "Attachment";
+        if(TextUtils.isEmpty(message) && msg.hasLocation())
+            message = "Location";
+
+        SampleAPI.notify(msg, message);
+        return;
     }
 
     @Override
-    public void Mesibo_onMessageStatus(Mesibo.MessageParams params) {
+    public void Mesibo_onMessageStatus(MesiboMessage params) {
     }
 
     @Override
-    public void Mesibo_onActivity(Mesibo.MessageParams params, int i) {
-    }
+    public void Mesibo_onMessageUpdate(MesiboMessage mesiboMessage) {
 
-    @Override
-    public void Mesibo_onLocation(Mesibo.MessageParams params, Mesibo.Location location) {
-        SampleAPI.notify(params, "Location");
-    }
-
-    @Override
-    public void Mesibo_onFile(Mesibo.MessageParams params, Mesibo.FileInfo fileInfo) {
-        SampleAPI.notify(params, "Attachment");
     }
 
     @Override
@@ -244,17 +249,17 @@ public class MesiboListeners implements Mesibo.ConnectionListener, ILoginInterfa
     }
 
     @Override
-    public void Mesibo_onShowProfile(Context context, MesiboProfile userProfile) {
+    public void MesiboUI_onShowProfile(Context context, MesiboProfile userProfile) {
         UIManager.launchUserProfile(context, userProfile.groupid, userProfile.address);
     }
 
     @Override
-    public void Mesibo_onDeleteProfile(Context c, MesiboProfile u, Handler handler) {
-
+    public boolean MesiboUI_onShowLocation(Context context, MesiboProfile profile) {
+        return false;
     }
 
     @Override
-    public int Mesibo_onGetMenuResourceId(Context context, int type, Mesibo.MessageParams params, Menu menu) {
+    public int MesiboUI_onGetMenuResourceId(Context context, int type, MesiboProfile profile, Menu menu) {
         int id = 0;
         if (type == 0) { // Setting menu in userlist
             id = R.menu.messaging_activity_menu;
@@ -267,23 +272,26 @@ public class MesiboListeners implements Mesibo.ConnectionListener, ILoginInterfa
 
         ((Activity)context).getMenuInflater().inflate(id, menu);
 
-        if(1 == type && null != params && params.groupid > 0) {
-            MesiboProfile profile = Mesibo.getProfile(params.groupid);
-
+        if(1 == type && null != profile && profile.isGroup()) {
             MenuItem menuItem = menu.findItem(R.id.action_call);
             if(!profile.isActive()) menuItem.setVisible(false);
             menuItem.setIcon(R.drawable.ic_mesibo_groupcall_audio);
+           // MenuItemCompat.setShowAsAction(menuItem, MenuItemCompat.SHOW_AS_ACTION_NEVER);
 
             menuItem = menu.findItem(R.id.action_videocall);
             menuItem.setIcon(R.drawable.ic_mesibo_groupcall_video);
             if(!profile.isActive()) menuItem.setVisible(false);
+            //MenuItemCompat.setShowAsAction(menuItem, MenuItemCompat.SHOW_AS_ACTION_NEVER);
         }
 
         return 0;
     }
 
     @Override
-    public boolean Mesibo_onMenuItemSelected(Context context, int type, Mesibo.MessageParams params, int item) {
+    public boolean MesiboUI_onMenuItemSelected(Context context, int type, MesiboProfile profile, int item) {
+        if(null == context)
+            return false;
+
         if (type == 0) { // from userlist
             if (item == R.id.action_settings) {
                 UIManager.launchUserSettings(context);
@@ -302,22 +310,19 @@ public class MesiboListeners implements Mesibo.ConnectionListener, ILoginInterfa
             }
         } 
 	else { // from messaging box
-            if(R.id.action_call == item && 0 == params.groupid) {
-                if(!MesiboCall.getInstance().callUi(context, params.profile.address, false))
+            if(null == profile) {
+                return false;
+            }
+            if(R.id.action_call == item) {
+                if(!MesiboCall.getInstance().callUi(context, profile, false))
                     MesiboCall.getInstance().callUiForExistingCall(context);
             }
-            else if(R.id.action_videocall == item && 0 == params.groupid) {
-                if(!MesiboCall.getInstance().callUi(context, params.profile.address, true))
+            else if(R.id.action_videocall == item) {
+                if(!MesiboCall.getInstance().callUi(context, profile, true))
                     MesiboCall.getInstance().callUiForExistingCall(context);
-            }
-            else if(R.id.action_call == item && params.groupid > 0) {
-                MesiboCall.getInstance().groupCallUi(context, Mesibo.getProfile(params.groupid), false, true);
-            }
-            else if(R.id.action_videocall == item && params.groupid > 0) {
-                MesiboCall.getInstance().groupCallUi(context, Mesibo.getProfile(params.groupid), true, true);
             }
             else if(R.id.action_e2e == item) {
-                MesiboUI.showEndToEndEncryptionInfo(context, params.peer, params.groupid);
+                MesiboUI.showEndToEndEncryptionInfo(context, profile.getAddress(), profile.groupid);
             }
         }
 
@@ -326,10 +331,10 @@ public class MesiboListeners implements Mesibo.ConnectionListener, ILoginInterfa
 
     //Note this is not in UI thread
     @Override
-    public boolean Mesibo_onMessageFilter(Mesibo.MessageParams messageParams, int i, byte[] data) {
+    public boolean Mesibo_onMessageFilter(MesiboMessage msg) {
 
         // using it for notifications
-        if(1 != messageParams.type || messageParams.isCall())
+        if(1 != msg.type || msg.isCall())
             return true;
 
         return false;
@@ -363,7 +368,7 @@ public class MesiboListeners implements Mesibo.ConnectionListener, ILoginInterfa
 
         } else if(MesiboCall.MESIBOCALL_NOTIFY_MISSED == type) {
             subject = "Mesibo Missed Call";
-            message = "You missed a mesibo " + (video?"video ":"") + "call from " + profile.getName();
+            message = "You missed a mesibo " + (video?"video ":"") + "call from " + profile.getNameOrAddress("+");
 
         }
 
@@ -434,12 +439,6 @@ public class MesiboListeners implements Mesibo.ConnectionListener, ILoginInterfa
         }
 
         if(foreground) mLastContext= context;
-
-    }
-
-    @Override
-    public boolean Mesibo_onShowLocation(Context context, Mesibo.MessageParams messageParams) {
-        return false;
     }
 
     @Override

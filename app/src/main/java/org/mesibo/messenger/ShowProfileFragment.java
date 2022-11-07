@@ -67,7 +67,9 @@ import android.widget.TextView;
 
 import com.mesibo.api.Mesibo;
 import com.mesibo.api.MesiboGroupProfile;
+import com.mesibo.api.MesiboMessage;
 import com.mesibo.api.MesiboProfile;
+import com.mesibo.api.MesiboReadSession;
 import com.mesibo.emojiview.EmojiconTextView;
 
 import java.util.ArrayList;
@@ -117,7 +119,7 @@ public class ShowProfileFragment extends Fragment implements Mesibo.MessageListe
     TextView mPhoneType ;
 
     private static Bitmap mDefaultProfileBmp;
-    private Mesibo.ReadDbSession mReadSession = null;
+    private MesiboReadSession mReadSession = null;
 
     public ShowProfileFragment() {
     }
@@ -161,7 +163,7 @@ public class ShowProfileFragment extends Fragment implements Mesibo.MessageListe
         mMediaCardView.setVisibility(GONE);
         Mesibo.addListener(this);
 
-        mReadSession = new Mesibo.ReadDbSession(mUser.address, mUser.groupid, null, this);
+        mReadSession = mUser.createReadSession(this);
         mReadSession.enableFiles(true);
         mReadSession.enableReadReceipt(true);
         mReadSession.read(100);
@@ -297,18 +299,16 @@ public class ShowProfileFragment extends Fragment implements Mesibo.MessageListe
             }
         });
 
-
         return v;
     }
 
-
-    private void addThumbnailToGallery(Mesibo.FileInfo fileInfo) {
+    private void addThumbnailToGallery(MesiboMessage msg) {
         View thumbnailView = null;
-        String path = fileInfo.getPath();
+        String path = msg.getFilePath();
         mThumbnailMediaFiles.add(path);
         if (mThumbnailMediaFiles.size() < MAX_THUMBNAIL_GALERY_SIZE) {
             if (null != path) {
-                thumbnailView = getThumbnailView(fileInfo.image, (fileInfo.type == VIDEO_FILE) ? true:false);
+                thumbnailView = getThumbnailView(msg.getThumbnail(), msg.hasVideo());
                 if(null != thumbnailView) {
                     thumbnailView.setClickable(true);
                     thumbnailView.setTag(mMediaFilesCounter - 1);
@@ -328,7 +328,9 @@ public class ShowProfileFragment extends Fragment implements Mesibo.MessageListe
 
 
     View       getThumbnailView (Bitmap bm, Boolean isVideo) {
-        LayoutInflater layoutInflater = LayoutInflater.from(getActivity());
+        Context activity = getActivity();
+        if(null == activity) return null;
+        LayoutInflater layoutInflater = LayoutInflater.from(activity);
         View view  = layoutInflater.inflate(R.layout.video_layer_layout_horizontal_gallery, null, false);
         ImageView thumbpic = (ImageView) view.findViewById(R.id.mp_thumbnail);
         thumbpic.setImageBitmap(bm);
@@ -376,38 +378,19 @@ public class ShowProfileFragment extends Fragment implements Mesibo.MessageListe
     }
 
     @Override
-    public boolean Mesibo_onMessage(Mesibo.MessageParams messageParams, byte[] bytes) {
-        return false;
-    }
-
-    @Override
-    public void Mesibo_onMessageStatus(Mesibo.MessageParams params) {
-
-    }
-
-    @Override
-    public void Mesibo_onActivity(Mesibo.MessageParams messageParams, int i) {
-
-    }
-
-    @Override
-    public void Mesibo_onLocation(Mesibo.MessageParams messageParams, Mesibo.Location location) {
-
-    }
-
-    @Override
-    public void Mesibo_onFile(Mesibo.MessageParams messageParams, Mesibo.FileInfo fileInfo) {
+    public void Mesibo_onMessage(MesiboMessage msg) {
+        if(!msg.hasFile()) return;
         mMediaCardView.setVisibility(VISIBLE);
         mMediaFilesCounter++;
         mMediaCounterView.setText(String.valueOf(mMediaFilesCounter)+"\u3009 ");
         AlbumPhotosData newPhoto = new AlbumPhotosData();
-        newPhoto.setmPictueUrl(fileInfo.getPath());
-        newPhoto.setmSourceUrl(fileInfo.getPath());
+        newPhoto.setmPictueUrl(msg.getFilePath());
+        newPhoto.setmSourceUrl(msg.getFilePath());
         AlbumListData tempAlbum;
         int index=0;
-        if(fileInfo.type==VIDEO_FILE)
+        if(msg.hasVideo())
             index = 1;
-        else if (fileInfo.type != IMAGE_FILE)
+        else if (!msg.hasImage())
             index = 2;
         tempAlbum = mGalleryData.get(index);
 
@@ -416,11 +399,22 @@ public class ShowProfileFragment extends Fragment implements Mesibo.MessageListe
             tempAlbum.setmPhotosList(newPhotoList);
         }
         if(tempAlbum.getmPhotosList().size()==0) {
-            tempAlbum.setmAlbumPictureUrl(fileInfo.getPath());
+            tempAlbum.setmAlbumPictureUrl(msg.getFilePath());
         }
         tempAlbum.getmPhotosList().add(newPhoto);
         tempAlbum.setmPhotoCount(tempAlbum.getmPhotosList().size());
-        addThumbnailToGallery(fileInfo);
+        addThumbnailToGallery(msg);
+        return;
+    }
+
+    @Override
+    public void Mesibo_onMessageStatus(MesiboMessage msg) {
+
+    }
+
+    @Override
+    public void Mesibo_onMessageUpdate(MesiboMessage mesiboMessage) {
+
     }
 
     public boolean parseGroupMembers(MesiboGroupProfile.Member[] users) {
@@ -665,7 +659,7 @@ public class ShowProfileFragment extends Fragment implements Mesibo.MessageListe
                                 return;
                             }
 
-                            MesiboUI.launchMessageView(getActivity(), profile.address, profile.groupid);
+                            MesiboUI.launchMessageView(getActivity(), profile);
                             getActivity().finish();
                             return;
                         }
@@ -706,7 +700,7 @@ public class ShowProfileFragment extends Fragment implements Mesibo.MessageListe
                                     members[0] = mDataList.get(position).getAddress();
                                     mUser.getGroupProfile().addMembers(members , MesiboGroupProfile.MEMBERFLAG_ALL, member.isAdmin()?0:MesiboGroupProfile.ADMINFLAG_ALL);
                                 } else  if( 2 == item) {
-                                    MesiboUI.launchMessageView(getActivity(), profile.address, profile.groupid);
+                                    MesiboUI.launchMessageView(getActivity(), profile);
                                     getActivity().finish();
                                     return;
                                 }

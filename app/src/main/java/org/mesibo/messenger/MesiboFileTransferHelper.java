@@ -44,17 +44,18 @@ import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
 
-import com.google.gson.Gson;
 import com.mesibo.api.Mesibo;
+import com.mesibo.api.MesiboFileTransfer;
+import com.mesibo.api.MesiboHttp;
 
+import org.json.JSONObject;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
 // Refer to http://mesibo.com/documentation/get-started/file-transfer/#how-to-send-and-receive-files
 public class MesiboFileTransferHelper implements Mesibo.FileTransferHandler {
 
-    private static Gson mGson = new Gson();
-    private static Mesibo.HttpQueue mQueue = new Mesibo.HttpQueue(4, 0);
+    private static MesiboHttp.Queue mQueue = new MesiboHttp.Queue(4, 0);
     public static class MesiboUrl {
         public String op;
         public String file;
@@ -73,14 +74,10 @@ public class MesiboFileTransferHelper implements Mesibo.FileTransferHandler {
         	//Mesibo.addListener(this);
     }
     
-    public boolean Mesibo_onStartUpload(Mesibo.MessageParams params, final Mesibo.FileInfo file) {
+    public boolean Mesibo_onStartUpload(final MesiboFileTransfer file) {
 
         // we don't need to check origin the way we do in download
-        if(Mesibo.getNetworkConnectivity() != Mesibo.CONNECTIVITY_WIFI && !file.userInteraction)
-            return false;
-
-        // limit simultaneous upload or download
-        if(mUploadCounter >= 3 && !file.userInteraction)
+        if(mUploadCounter >= 5 && file.priority == 0)
             return false;
 
         final long mid = file.mid;
@@ -92,7 +89,7 @@ public class MesiboFileTransferHelper implements Mesibo.FileTransferHandler {
         b.putInt("profile", 0);
 
         updateUploadCounter(1);
-        Mesibo.Http http = new Mesibo.Http();
+        MesiboHttp http = new MesiboHttp();
 
         http.url = SampleAPI.getUploadUrl();
         http.postBundle = b;
@@ -101,46 +98,42 @@ public class MesiboFileTransferHelper implements Mesibo.FileTransferHandler {
         http.other = file;
         file.setFileTransferContext(http);
 
-        http.listener = new Mesibo.HttpListener() {
+        http.listener = new MesiboHttp.Listener() {
             @Override
-            public boolean Mesibo_onHttpProgress(Mesibo.Http config, int state, int percent) {
-                Mesibo.FileInfo f = (Mesibo.FileInfo)config.other;
+            public boolean Mesibo_onHttpProgress(MesiboHttp config, int state, int percent) {
+                MesiboFileTransfer f = (MesiboFileTransfer)config.other;
 
-                if(100 == percent && Mesibo.Http.STATE_DOWNLOAD == state) {
+                if(100 == percent && MesiboHttp.STATE_DOWNLOAD == state) {
                     String response = config.getDataString();
-                    MesiboUrl mesibourl = null;
+                    String url = null;
+                    boolean result = false;
+
                     try {
-                        mesibourl = mGson.fromJson(response, MesiboUrl.class);
+                        JSONObject jo = new JSONObject(response);
+                        if(null != jo) {
+                            url = jo.getString("url");
+                            result = jo.getBoolean("result");
+                        }
+
                     } catch (Exception e) {}
 
-                    if(null == mesibourl || null == mesibourl.file) {
-                        Mesibo.updateFileTransferProgress(f, -1, Mesibo.FileInfo.STATUS_FAILED);
-                        return false;
-                    }
-
-                    //TBD, f.setPath if video is re-compressed
-                    f.setUrl(mesibourl.file);
+                    f.setResult(result, url);
+                    return true;
                 }
 
-                int status = f.getStatus();
-                if(100 == percent || status != Mesibo.FileInfo.STATUS_RETRYLATER) {
-                    status = Mesibo.FileInfo.STATUS_INPROGRESS;
-                    if(percent < 0)
-                        status = Mesibo.FileInfo.STATUS_RETRYLATER;
+                if(percent < 0) {
+                    f.setResult(false, null);
+                    return true;
                 }
 
-                if(percent < 100 || (100 == percent && Mesibo.Http.STATE_DOWNLOAD == state))
-                    Mesibo.updateFileTransferProgress(f, percent, status);
-
-                if((100 == percent && Mesibo.Http.STATE_DOWNLOAD == state) || status != Mesibo.FileInfo.STATUS_INPROGRESS)
-                    updateUploadCounter(-1);
-
-                return ((100 == percent && Mesibo.Http.STATE_DOWNLOAD == state) || status != Mesibo.FileInfo.STATUS_RETRYLATER);
+                f.setProgress(percent);
+                return true;
             }
         };
 
         if(null != mQueue)
             mQueue.queue(http);
+
         else if(http.execute()) {
 
         }
@@ -149,30 +142,30 @@ public class MesiboFileTransferHelper implements Mesibo.FileTransferHandler {
 
     }
 
-    public boolean Mesibo_onStartDownload(final Mesibo.MessageParams params, final Mesibo.FileInfo file) {
+    public boolean Mesibo_onStartDownload(final MesiboFileTransfer file) {
 
         //TBD, check file type and size to decide automatic download
-        if(!SampleAPI.getMediaAutoDownload() && Mesibo.getNetworkConnectivity() != Mesibo.CONNECTIVITY_WIFI && !file.userInteraction)
+        if(!SampleAPI.getMediaAutoDownload() && Mesibo.getNetworkConnectivity() != Mesibo.CONNECTIVITY_WIFI && 0 == file.priority)
             return false;
 
         // only realtime messages to be downloaded in automatic mode.
-        if(Mesibo.ORIGIN_REALTIME != params.origin && !file.userInteraction)
+        if(Mesibo.ORIGIN_REALTIME != file.origin && Mesibo.ORIGIN_DBPENDING != file.origin && file.priority == 0)
             return false;
 
-        // limit simultaneous upload or download, 1st condition is redundant but for reference only
-        if(Mesibo.getNetworkConnectivity() != Mesibo.CONNECTIVITY_WIFI && mDownloadCounter >= 3 && !file.userInteraction)
-            return false;
 
         updateDownloadCounter(1);
 
         final long mid = file.mid;
 
         String url = file.getUrl();
+        if(TextUtils.isEmpty(url))
+            return false;
+
         if(!url.toLowerCase().startsWith("http://") && !url.toLowerCase().startsWith("https://")) {
             url = SampleAPI.getDownloadUrl() + url;
         }
 
-        Mesibo.Http http = new Mesibo.Http();
+        MesiboHttp http = new MesiboHttp();
 
         http.url = url;
         http.downloadFile = file.getPath();
@@ -181,35 +174,23 @@ public class MesiboFileTransferHelper implements Mesibo.FileTransferHandler {
         http.other = file;
         file.setFileTransferContext(http);
 
-        http.listener = new Mesibo.HttpListener() {
+        http.listener = new MesiboHttp.Listener() {
             @Override
-            public boolean Mesibo_onHttpProgress(Mesibo.Http http, int state, int percent) {
-                Mesibo.FileInfo f = (Mesibo.FileInfo)http.other;
+            public boolean Mesibo_onHttpProgress(MesiboHttp config, int state, int percent) {
+                MesiboFileTransfer f = (MesiboFileTransfer)config.other;
 
-                int status = Mesibo.FileInfo.STATUS_INPROGRESS;
-
-                //TBD, we can simplify this now, don't need separate handling
-                if(Mesibo.FileInfo.SOURCE_PROFILE == f.source) {
-                    if(100 == percent) {
-                        Mesibo.updateFileTransferProgress(f, percent, Mesibo.FileInfo.STATUS_INPROGRESS);
-                    }
-                } else {
-
-                    status = f.getStatus();
-                    if(100 == percent || status != Mesibo.FileInfo.STATUS_RETRYLATER) {
-                        status = Mesibo.FileInfo.STATUS_INPROGRESS;
-                        if(percent < 0)
-                            status = Mesibo.FileInfo.STATUS_RETRYLATER;
-                    }
-
-                    Mesibo.updateFileTransferProgress(f, percent, status);
-
+                if(100 == percent && MesiboHttp.STATE_DOWNLOAD == state) {
+                    f.setResult(true, null);
+                    return true;
                 }
 
-                if(100 == percent || status != Mesibo.FileInfo.STATUS_INPROGRESS)
-                    updateDownloadCounter(-1);
+                if(percent < 0) {
+                    f.setResult(false, null);
+                    return true;
+                }
 
-                return (100 == percent  || status != Mesibo.FileInfo.STATUS_RETRYLATER);
+                f.setProgress(percent);
+                return true;
             }
         };
 
@@ -223,16 +204,16 @@ public class MesiboFileTransferHelper implements Mesibo.FileTransferHandler {
     }
 
     @Override
-    public boolean Mesibo_onStartFileTransfer(Mesibo.FileInfo file) {
-        if(Mesibo.FileInfo.MODE_DOWNLOAD == file.mode)
-            return Mesibo_onStartDownload(file.getParams(), file);
+    public boolean Mesibo_onStartFileTransfer(MesiboFileTransfer file) {
+        if(!file.upload)
+            return Mesibo_onStartDownload(file);
 
-        return Mesibo_onStartUpload(file.getParams(), file);
+        return Mesibo_onStartUpload(file);
     }
 
     @Override
-    public boolean Mesibo_onStopFileTransfer(Mesibo.FileInfo file) {
-        Mesibo.Http http = (Mesibo.Http) file.getFileTransferContext();
+    public boolean Mesibo_onStopFileTransfer(MesiboFileTransfer file) {
+        MesiboHttp http = (MesiboHttp) file.getFileTransferContext();
         if(null != http)
             http.cancel();
 
